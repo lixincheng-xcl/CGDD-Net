@@ -1,3 +1,3 @@
 # 🔥CGDD-Net
 
-## The code is coming soon!
+## The code will be released publicly before October, barring any unexpected issues.
