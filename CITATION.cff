@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use CGDD-Net in your research, please cite this software and the accompanying manuscript."
+title: "CGDD-Net: Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation"
+type: software
+authors:
+  - family-names: Li
+    given-names: Xincheng
+    orcid: "https://orcid.org/0009-0007-2730-2737"
+  - family-names: Zhang
+    given-names: Xinyu
+  - family-names: Sheng
+    given-names: Xiaoqi
+repository-code: "https://github.com/lixincheng-xcl/CGDD-Net"
+license: MIT
+version: "1.0.0"
+date-released: "2026-09-07"
