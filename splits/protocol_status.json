@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "status": "original_server_split_not_established_by_attachment",
+  "source": "VesselSeg-Pytorch-master original dataset directories and prepare_dataset scripts",
+  "inspected_on": "2026-09-10",
+  "is_experiment_manifest": false,
+  "datasets": {
+    "DRIVE": {"original_images": 40, "directory_training": 20, "directory_test": 20, "image_level_validation": "not_supplied"},
+    "STARE": {"original_images": 20, "baseline_example_train": 15, "baseline_example_test": 5, "five_fold_image_lists": "not_supplied"},
+    "CHASEDB1": {"original_images": 28, "subjects": 14, "baseline_example_train": 21, "baseline_example_test": 7, "baseline_subject_overlap": ["04"], "server_subject_disjoint_split": "not_supplied"},
+    "HRF": {"original_images": 45, "categories": {"h": 15, "dr": 15, "g": 15}, "train_val_test_assignment": "not_supplied"}
+  },
+  "excluded_derivatives": {"directory": "datasets/augmented", "training_images": 80, "test_images": 20},
+  "new_protocols": "Generate explicitly using scripts/prepare_data.py generate; generated files identify themselves as newly_generated_not_original_server_split."
+}

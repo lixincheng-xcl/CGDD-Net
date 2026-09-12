@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-10",
+  "unit_tests": {
+    "passed": 43,
+    "failed": 0
+  },
+  "local_environment": {
+    "python": "3.12.2",
+    "torch": "2.3.1",
+    "device": "cpu"
+  },
+  "synthetic_end_to_end": {
+    "status": "passed",
+    "epochs": 2,
+    "images": 4,
+    "size": [
+      32,
+      32
+    ],
+    "checks": [
+      "full model training",
+      "checkpoint save/load",
+      "same-directory resume",
+      "evaluation",
+      "probability and CSV/JSON outputs"
+    ]
+  },
+  "data_pair_validation": {
+    "DRIVE": 40,
+    "STARE": 20,
+    "CHASE_DB1": 28,
+    "HRF": 45
+  },
+  "package_build": "wheel built successfully without downloading runtime dependencies",
+  "statistics_cli": "synthetic independent-run aggregation fixture passed",
+  "default_parameters": 1956802,
+  "benchmark_reproduction": false,
+  "remote_ci_run": false,
+  "published_to_github": false,
+  "notes": [
+    "Two inherited optional pandas acceleration warnings in the local Anaconda environment; tests passed.",
+    "The figure-aligned implementation is not yet tied to the historical server model/configuration."
+  ],
+  "latest_local_validation": {
+    "date": "2026-09-13",
+    "unit_tests_passed": 43,
+    "unit_tests_failed": 0,
+    "python": "3.12.2",
+    "torch": "2.3.1",
+    "device": "cpu",
+    "base_learning_rate": 0.001,
+    "synthetic_end_to_end": "passed",
+    "benchmark_reproduction": false
+  }
+}

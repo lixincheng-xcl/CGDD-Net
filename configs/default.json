@@ -1,0 +1,36 @@
+{
+  "description": "The base learning rate 0.001 was confirmed by the author for the reported server experiments on 2026-09-10. Other values remain release defaults unless separately confirmed; this is not a recovered server run configuration.",
+  "model": {
+    "in_channels": 1,
+    "base_channels": 8,
+    "dropout": 0.1,
+    "ablation": "full"
+  },
+  "preprocessing": {
+    "color_mode": "gray",
+    "max_side": null,
+    "pad_multiple": 1
+  },
+  "training": {
+    "seed": 42,
+    "epochs": 50,
+    "batch_size": 64,
+    "patch_size": 64,
+    "patches_per_epoch": 150000,
+    "num_workers": 0,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "early_stopping": 6,
+    "warmup_epochs": 5,
+    "restart_epochs": 20,
+    "restart_mult": 2,
+    "warmup_start_factor": 0.1,
+    "min_lr_factor": 0.0
+  },
+  "inference": {
+    "patch_size": 96,
+    "stride": 16,
+    "batch_size": 8,
+    "threshold": 0.5
+  }
+}

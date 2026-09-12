@@ -1,394 +1,129 @@
-# CGDD-Net: Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation
+# CGDD-Net
 
-<div align="center">
+**Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation**
 
-**Official PyTorch implementation of CGDD-Net**
+Authors: **Xincheng Li, Xinyu Zhang, Xiaoqi Sheng**.
 
-<p>
-  <a href="https://github.com/lixincheng-xcl">Xincheng Li</a><sup>1</sup>,
-  <a href="https://github.com/zhangxinyu-xyz">Xinyu Zhang</a><sup>1</sup>,
-  Xiaoqi Sheng<sup>2</sup>
-</p>
+School of Computer Science, The University of Auckland, New Zealand; School of Future Technology, South China University of Technology, China.
 
-<p>
-  <sup>1</sup>School of Computer Science, The University of Auckland, New Zealand<br>
-  <sup>2</sup>School of Future Technology, South China University of Technology, China
-</p>
+A PyTorch implementation organized around the manuscript's completed architecture figures and the [VesselSeg-Pytorch](https://github.com/lee-zq/VesselSeg-Pytorch) data/training workflow. It includes CSDE, SAMG, DCDF, detail-guided decoding, selective skips and criss-cross attention, with seven cumulative ablations.
 
-<p>
-  <a href="https://github.com/lixincheng-xcl/CGDD-Net"><img src="https://img.shields.io/badge/Code-Released-brightgreen"></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-3776AB"></a>
-  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.1+-EE4C2C"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue"></a>
-</p>
+[中文说明](README_zh.md) · [Architecture](docs/architecture.md) · [Data protocol](docs/data_protocol.md) · [Release status](docs/release_status.md)
 
-</div>
+![CGDD-Net architecture](assets/architecture.png)
 
-> **CGDD-Net** is a compact retinal vessel segmentation network that coordinates **where to sample**, **which spatial scale to use**, **which intermediate details to retain**, and **how those details are reused during reconstruction**.
+## Release status
 
----
+This is a newly constructed, figure-aligned implementation. The authors confirm that the manuscript results were verified on their server, but this source release does not contain that server's original checkpoints, run configurations or split manifests. Its synthetic tests verify software behavior, not benchmark reproduction.
 
-## 📖 Table of Contents
+The default implementation has **1,956,802 trainable parameters (1.96 M)** with stage widths **8, 16, 32, 64, 128**. The manuscript now uses this measured parameter count. The reported **20.05 G FLOPs** remains an earlier server measurement whose input and counting convention have not been matched to this release. The supported-operator estimates in `docs/profile_measured.json` are partial counts, not a replacement for full FLOPs or measured latency.
 
-- [🔥 News](#-news)
-- [🧠 Method Overview](#-method-overview)
-- [📊 Manuscript Results](#-manuscript-results)
-- [🗂️ Repository Structure](#️-repository-structure)
-- [🚀 Getting Started](#-getting-started)
-- [🩻 Data Preparation](#-data-preparation)
-- [🏃 Training and Evaluation](#-training-and-evaluation)
-- [🧪 Ablation and Repeated Runs](#-ablation-and-repeated-runs)
-- [🔁 Cross-Dataset Evaluation](#-cross-dataset-evaluation)
-- [⚙️ Complexity and Verification](#️-complexity-and-verification)
-- [🤝 Citation](#-citation)
-- [🙏 Acknowledgements](#-acknowledgements)
-- [📄 License](#-license)
+## Installation
 
----
-
-## 🔥 News
-
-- **2026-09-07** — Initial public release of the cleaned CGDD-Net training, evaluation, ablation, and profiling code.
-- **2026-09-07** — Added reproducibility-oriented configuration, manifest-based dataset loading, and smoke tests.
-
----
-
-## 🧠 Method Overview
-
-Retinal vessels exhibit tortuous branching geometry, large caliber variation, and weak peripheral structures. CGDD-Net addresses these challenges with three coordinated stages:
-
-1. **Geometry-adaptive encoding — CSDE**  
-   The **Context-Guided Scale-Adaptive Deformable Encoding (CSDE)** module combines a stable fixed-grid branch with scale-adaptive deformable local attention. This lets the encoder adapt its sampling geometry without discarding reliable local evidence.
-
-2. **Dynamic detail modeling — SAMG + DCDF**  
-   **Spatially Adaptive Multi-Kernel Gating (SAMG)** assigns location-dependent weights to multi-kernel responses. **Dynamic Cross-Scale Detail Fusion (DCDF)** then aligns and consolidates selected detail responses from multiple encoder depths into a shared representation.
-
-3. **Selective reconstruction**  
-   The shared detail representation is reused across multiple decoder stages. Selective skip connections retain shallow localization and deep structural context, while a single Criss-Cross Attention (CCA) block provides lightweight contextual refinement.
-
-```mermaid
-flowchart LR
-    I[Fundus image] --> E[CSDE encoder]
-    E --> S[SAMG at E2/E3/E4]
-    S --> D[DCDF shared detail representation]
-    E --> K[Deep context E4]
-    E --> L[Shallow localization E1]
-    D --> R[Selective detail-guided decoder]
-    K --> R
-    L --> R
-    R --> C[CCA refinement at D3]
-    C --> O[Vessel probability map]
-```
-
-The executable model definition is in [`cgddnet/models/cgddnet.py`](cgddnet/models/cgddnet.py), with CSDE, SAMG, DCDF and CCA blocks in [`cgddnet/models/blocks.py`](cgddnet/models/blocks.py).
-
-The implementation exposes the same seven cumulative configurations used by the manuscript ablation:
-
-| CLI value | Configuration |
-|---|---|
-| `baseline` | CBR U-shaped baseline with standard skips |
-| `csde` | `baseline` + CSDE |
-| `samg` | `csde` + SAMG |
-| `dcdf` | `samg` + DCDF |
-| `detail_decoder` | `dcdf` + multi-stage detail-guided decoding |
-| `selective_skip` | `detail_decoder` + selective skips |
-| `full` | `selective_skip` + CCA (complete CGDD-Net) |
-
-All variants are cumulative from top to bottom.
-
----
-
-## 📊 Manuscript Results
-
-The current manuscript reports the following ROC-AUC values:
-
-| Dataset | DRIVE | CHASE_DB1 | STARE | HRF |
-|---|---:|---:|---:|---:|
-| **CGDD-Net AUC** | **0.9861** | **0.9910** | **0.9942** | **0.9871** |
-
-The default full model in this release contains **2,970,278 trainable parameters (2.97 M)**.
-
-> **Reproducibility note:** dataset files, trained checkpoints, and run-level prediction artifacts are not redistributed in this repository. The code is designed to reproduce training and evaluation once the public datasets and fixed split manifests are prepared. See [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md).
-
----
-
-## 🗂️ Repository Structure
-
-```text
-CGDD-Net/
-├── cgddnet/
-│   ├── models/              # CGDD-Net, CSDE, SAMG, DCDF, CCA
-│   ├── data/                # preprocessing and dataset loaders
-│   └── utils/               # metrics, inference, configs, reproducibility
-├── configs/
-│   └── default.yaml         # default paper-oriented configuration
-├── splits/                  # train/val/test JSON manifest templates
-├── scripts/                 # training, ablation, repeat-run helpers
-├── tools/                   # manifest, profiling, repeat-summary utilities
-├── tests/                   # architecture smoke tests
-├── examples/
-│   └── quickstart.py
-├── docs/
-│   ├── DATASETS.md
-│   ├── REPRODUCIBILITY.md
-│   └── ARCHITECTURE.md
-├── train.py
-├── test.py
-├── cross_dataset.py
-├── requirements.txt
-├── environment.yml
-├── pyproject.toml
-└── LICENSE
-```
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repository
+Python 3.10 or newer is required. Install a suitable PyTorch build using the [official installation selector](https://pytorch.org/get-started/locally/), then:
 
 ```bash
-git clone https://github.com/lixincheng-xcl/CGDD-Net.git
-cd CGDD-Net
+python -m pip install -e '.[dev]'
+python -m pytest -q
+python scripts/smoke_test.py
 ```
 
-### 2. Create the environment
+Local CPU validation used Python 3.12.2 and PyTorch 2.3.1. The author-reported experiment environment is NVIDIA H200 141 GB, PyTorch 2.13.0 and CUDA 13.2. No CUDA extension or third-party deformable-convolution build is required.
 
-Conda:
+## Data and explicit splits
+
+Obtain DRIVE, STARE, CHASE_DB1 and HRF from their original providers, retain their supplied labels/FOV masks, and keep the image data outside this repository. The inherited directory layout and manifest schema are documented in [data_protocol.md](docs/data_protocol.md).
 
 ```bash
-conda env create -f environment.yml
-conda activate cgddnet
+python scripts/prepare_data.py inspect --data-root ../datasets
 ```
 
-or pip:
+Use the actual train/validation/test manifests from your experiment. If starting a **new experiment**, the following explicitly creates a new DRIVE protocol: it preserves the official 20 test images and selects 2 validation images from the 20-image development set.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -U pip
-pip install -r requirements.txt
-pip install -e .
+python scripts/prepare_data.py generate --data-root ../datasets \
+  --dataset DRIVE --strategy drive-official --seed 42 --output splits/new_drive
+python scripts/prepare_data.py validate --data-root ../datasets \
+  --train splits/new_drive/train.json --val splits/new_drive/val.json \
+  --test splits/new_drive/test.json
 ```
 
-The deformable local-attention path uses native PyTorch `grid_sample`; no custom CUDA deformable-convolution extension is required.
+CHASE eyes are grouped by subject. Other new holdouts and grouped folds are available through `--help`. Generated protocols are labelled as new experiments, not the historical manuscript partitions. No dataset images or fabricated result files are included. Training/validation separation occurs before patch sampling.
 
-### 3. Quick architecture check
+## Training and evaluation
 
 ```bash
-pytest -q
+python train.py --config configs/default.json \
+  --train-manifest splits/new_drive/train.json --val-manifest splits/new_drive/val.json \
+  --data-root ../datasets --output runs/drive_seed42 --device cuda
+
+python evaluate.py --checkpoint runs/drive_seed42/best.pt \
+  --manifest splits/new_drive/test.json --data-root ../datasets \
+  --output runs/drive_seed42/test --device cuda
 ```
 
-or:
+Choose `--device cpu` for a small functional check. The base learning rate in `configs/default.json` is `0.001`, confirmed by the author for the reported server experiments on 2026-09-10. Other configuration values remain release defaults unless separately confirmed; the file is not a recovered server configuration. Adam uses linear warmup followed by cosine restarts; the threshold is 0.5. The model emits logits and uses numerically stable FOV-weighted binary cross entropy. Inference averages overlapping patch probabilities before thresholding.
+
+A run stores `config.json`, `environment.json`, copied manifests and their hashes, `history.csv`, `best.pt`, `latest.pt`, and `training_summary.json`. Evaluation exports per-image probabilities, binary predictions, `per_image.csv`, `summary.json`, and checkpoint/configuration provenance. Metrics are computed inside each image's FOV and then averaged without pixel-count weighting. Undefined AUCs remain explicit. Image-to-image standard deviation must not be reported as seed-to-seed training variation. Optional resizing changes the evaluation resolution; each CSV row records original and evaluated dimensions.
+
+Resume using the **same configuration, manifests and original output directory**:
 
 ```bash
-python examples/quickstart.py
+python train.py --config configs/default.json \
+  --train-manifest splits/new_drive/train.json --val-manifest splits/new_drive/val.json \
+  --data-root ../datasets --output runs/drive_seed42 --device cuda \
+  --resume runs/drive_seed42/latest.pt
 ```
 
-Expected output shape:
+The matching `best.pt` must remain alongside the resume checkpoint. This preserves the historical best model even if resumed epochs do not improve it. Checkpoints are loaded with PyTorch's weights-only loader.
 
-```text
-input : (1, 3, 48, 48)
-output: (1, 1, 48, 48)
-params: 2,970,278
-```
+For cross-dataset evaluation, keep the source checkpoint/configuration fixed and pass a target dataset manifest to `evaluate.py`. Do not tune the checkpoint or threshold against the target test labels.
 
----
+## Ablations, profiling and statistics
 
-## 🩻 Data Preparation
+Set `model.ablation` to one of:
 
-CGDD-Net supports **DRIVE**, **CHASE_DB1**, **STARE**, and **HRF** through JSON manifests. Dataset files are not included; please obtain them from their official providers and respect the corresponding licenses.
+`baseline`, `csde`, `samg`, `dcdf`, `detail_decoder`, `selective_skip`, `full`.
 
-A sample manifest entry is:
-
-```json
-[
-  {
-    "id": "sample_001",
-    "image": "images/sample_001.png",
-    "mask": "masks/sample_001.png",
-    "fov": "fov/sample_001.png"
-  }
-]
-```
-
-`fov` is optional. If it is absent, the code estimates a conservative field-of-view mask from the fundus image.
-
-Update dataset roots in `configs/default.yaml`, then populate:
-
-```text
-splits/
-├── DRIVE/{train,val,test}.json
-├── CHASE_DB1/{train,val,test}.json
-├── STARE/{train,val,test}.json
-└── HRF/{train,val,test}.json
-```
-
-A helper is provided for pairing image/mask directories:
+The implementation choices for partial configurations and their actual parameter counts are documented in `docs/architecture.md`. Use matched seeds and partitions for new comparisons.
 
 ```bash
-python tools/manifest_from_dirs.py \
-  --root data/DRIVE \
-  --images training/images \
-  --masks training/1st_manual \
-  --fovs training/mask \
-  --output splits/DRIVE/train_all.json
+python scripts/profile_model.py --config configs/default.json --height 96 --width 96
+# Optional operator-count estimate; unsupported operations are always disclosed:
+python -m pip install -e '.[profile]'
+python scripts/profile_model.py --config configs/default.json --height 96 --width 96 --fvcore
+
+# Aggregate actual independent training runs; input schema is in --help:
+python scripts/summarize_runs.py completed_runs.csv --reference CGDD-Net --output statistics.json
 ```
 
-For detailed guidance, see [`docs/DATASETS.md`](docs/DATASETS.md).
+The statistics utility computes sample SD across seed-level rows and, if requested, two-sided paired Wilcoxon tests with Holm correction within each dataset. It does not infer a test from a table of means and SDs and does not retroactively validate the manuscript's existing p-values.
 
-### Default preprocessing
+## Loss function
 
-- RGB fundus image → grayscale
-- FOV-aware standardization
-- CLAHE (`clipLimit=2.0`, `8×8` tiles)
-- gamma correction (`γ=1.2`)
-- normalization and replication to three channels
-- random `48×48` crops sampled from `64×64` in-FOV windows
-- paired horizontal/vertical flips and right-angle rotations
+Training minimizes FOV-masked binary cross entropy from logits:
 
----
-
-## 🏃 Training and Evaluation
-
-### Train CGDD-Net
-
-```bash
-python train.py \
-  --config configs/default.yaml \
-  --dataset DRIVE \
-  --ablation full \
-  --seed 2026 \
-  --output runs/DRIVE/full/seed_2026
+```python
+loss = (F.binary_cross_entropy_with_logits(logits, target, reduction="none") * fov).sum() / fov.sum()
 ```
 
-Default optimization:
+Only pixels inside the FOV contribute. Empty FOV masks are rejected. There are no additional Dice, boundary, topology or deep-supervision loss terms and no class reweighting. Sigmoid is applied for inference, not before this loss.
 
-- Adam
-- initial learning rate `5e-4`
-- batch size `64`
-- cosine annealing
-- up to `50` epochs
-- early stopping patience `6`
-- BCE-with-logits objective
-- best checkpoint selected by validation AUC
+## Author-supplied paper values
 
-### Test
+| Dataset | SE | SP | ACC | F1 | AUC |
+|---|---:|---:|---:|---:|---:|
+| DRIVE | 0.8421 | 0.9768 | 0.9704 | 0.8323 | 0.9824 |
+| CHASE_DB1 | 0.8600 | 0.9815 | 0.9752 | 0.8102 | 0.9938 |
+| STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
+| HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-```bash
-python test.py \
-  --config configs/default.yaml \
-  --dataset DRIVE \
-  --checkpoint runs/DRIVE/full/seed_2026/best.pt \
-  --save-predictions
-```
+Machine-readable transcriptions and provenance are under `results/`. They are independent of locally generated test outputs. Hyperparameter Figure 8 is under author revision and is not used to choose this release's defaults.
 
-Evaluation uses overlapping `96×96` windows with stride `16`, probability averaging, and a default threshold of `0.5`.
+## Publishing and attribution
 
-The evaluator writes:
+This folder is the repository root: upload its contents to GitHub, or use `python scripts/build_release.py` to create a clean source ZIP. The source pack excludes datasets, checkpoints, local environments and runtime outputs. See [release notes](RELEASE_NOTES.md) for the migration from the earlier YAML-based implementation.
 
-```text
-summary.json
-per_image.csv
-predictions/*.png    # when --save-predictions is used
-```
+See [中文归档说明](docs/reproducibility_zh.md) for how to attach final configurations, split manifests and actual run outputs to a fixed release. Add the final paper citation and author metadata when approved; no journal acceptance or DOI is asserted here.
 
-Reported metrics are **SE, SP, ACC, F1, and AUC**.
-
----
-
-## 🧪 Ablation and Repeated Runs
-
-### Seven-step cumulative ablation
-
-```bash
-bash scripts/run_ablation.sh DRIVE configs/default.yaml 2026
-```
-
-Supported variants:
-
-```text
-baseline → csde → samg → dcdf → detail_decoder → selective_skip → full
-```
-
-### Repeated runs
-
-```bash
-bash scripts/run_repeats.sh DRIVE configs/default.yaml
-python tools/summarize_repeats.py runs/DRIVE/full
-```
-
-The helper script uses seeds `2026` through `2035` by default.
-
----
-
-## 🔁 Cross-Dataset Evaluation
-
-Train on the source dataset and evaluate the selected source-domain checkpoint on the target dataset without target-domain fine-tuning:
-
-```bash
-python cross_dataset.py \
-  --config configs/default.yaml \
-  --source STARE \
-  --target DRIVE \
-  --checkpoint runs/STARE/full/seed_2026/best.pt
-```
-
----
-
-## ⚙️ Complexity and Verification
-
-Profile the model:
-
-```bash
-python tools/profile_model.py --ablation full --size 256
-```
-
-The profiler reports trainable parameters and the `fvcore` counted-FLOP proxy. Unsupported operators are printed explicitly and should not be interpreted as hardware latency.
-
-The release package has been smoke-tested:
-
-- all seven ablation variants produce finite `B×1×H×W` logits;
-- the full model contains **2,970,278** trainable parameters;
-- forward and BCE backward passes produce finite values;
-- `pytest -q` passes the included tests.
-
-See [`VERIFICATION.md`](VERIFICATION.md) and [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md).
-
----
-
-## 🤝 Citation
-
-If you find this code useful, please cite the CGDD-Net manuscript:
-
-```bibtex
-@misc{li2026cgddnet,
-  title   = {CGDD-Net: Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation},
-  author  = {Li, Xincheng and Zhang, Xinyu and Sheng, Xiaoqi},
-  year    = {2026},
-  note    = {Manuscript}
-}
-```
-
-The citation will be updated when final publication metadata becomes available.
-
----
-
-## 🙏 Acknowledgements
-
-This release was informed by the open-source retinal vessel segmentation ecosystem. In particular, we thank the authors of:
-
-- [MDF-Net](https://github.com/virtual11111/MDF-Net)
-- [VesselSeg-Pytorch](https://github.com/lee-zq/VesselSeg-Pytorch)
-
-for making reusable training and evaluation references publicly available.
-
-The CGDD-Net architecture and the release implementation in this repository are organized as a standalone package.
-
----
-
-## 📄 License
-
-This project is released under the [MIT License](LICENSE).
-
-For the public retinal datasets used by the project, please follow the licenses and terms of their original providers.
+The inherited workflow is acknowledged in `NOTICE` and its Apache-2.0 license is retained in `LICENSE`. The earlier repository's MIT notice is preserved in `LICENSES/legacy-MIT.txt`. Dataset access and redistribution are governed by the original providers, separately from the software license.

@@ -1,0 +1,17 @@
+CGDD-Net
+
+This implementation follows and reworks the training/data/evaluation workflow of
+VesselSeg-Pytorch by lee-zq:
+https://github.com/lee-zq/VesselSeg-Pytorch
+The supplied upstream project is licensed under the Apache License, Version 2.0;
+a copy is included in LICENSE.
+
+Changes in this release: CGDD-Net architecture matching the supplied manuscript
+diagrams, explicit split manifests, image/subject leakage checks, normalized
+inputs, masked binary cross entropy, linear warmup and cosine restarts, portable
+run configuration, checkpoint/resume support, and reproducibility utilities.
+
+The upstream retinal image datasets are not included and are not licensed by
+this software license. Obtain them from their original providers.
+The manuscript's reported benchmark scores are author-supplied results, not
+measurements produced by the repository's synthetic smoke tests.

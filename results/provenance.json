@@ -1,0 +1,23 @@
+{
+  "provenance": "Transcribed from author-supplied manuscript tables; author confirms server verification.",
+  "generated_by_this_release": false,
+  "indomain_and_ablation_units": "fractions",
+  "transfer_units": "percent",
+  "reported_server_complexity": {
+    "parameters_million": 1.82,
+    "flops_giga": 20.05
+  },
+  "new_release_measured_parameters": 1956802,
+  "source_sha256": {
+    "cgdd_results.tex": "c00a65a777449af94fd274ea3743a85cec654ad4e196babfb4ec712688ae1296",
+    "Table08_Ablation_DRIVE.tex": "ce793aca5a825904ef018629bafe085e8f2ca39d9e7c8e79f4b04d7357da6b35",
+    "Table09_Cross_Validation.tex": "6118eee933f0ee541e8507242364fec1d004527a630dc5c870a1442539381e67"
+  },
+  "missing_from_source_release": [
+    "original server checkpoints",
+    "final server configurations",
+    "server split manifests",
+    "seed-level result files"
+  ],
+  "note": "Do not infer seeds, significance or reproduced benchmark performance from these summary CSVs."
+}

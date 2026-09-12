@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "measured_at_utc": "2026-09-10T00:04:16.063016+00:00",
+  "status": "Measured on the newly constructed release; not validation of the historical manuscript or H200 results.",
+  "parameters": 1956802,
+  "trainable_parameters": 1956802,
+  "resolved_model_config": {
+    "in_channels": 1,
+    "base_channels": 8,
+    "detail_channels": 8,
+    "dropout": 0.1,
+    "attention_scales": [
+      1,
+      3,
+      5,
+      7
+    ],
+    "samg_hidden": 8,
+    "ffn_expansion": 2.0,
+    "large_kernel": 7,
+    "ablation": "full"
+  },
+  "source_sha256": {
+    "cgddnet/model.py": "b0a091e5e826e47fde69f535998478031416e8fd740b81b93b3eed0e0e462779",
+    "scripts/profile_model.py": "eb24d84b39b8d7b3506d2cb7faa8c737825a31d113585b93c7197d86eeb31a61",
+    "configs/default.json": "17fd8a1e8e840141d7b85b2840e3d7d99ddf811b9daa0f6a21600d86375fab3c"
+  },
+  "environment": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 21:00:12) [Clang 16.0.6 ]",
+    "torch": "2.3.1",
+    "fvcore": "0.1.5.post20221221",
+    "platform": "macOS-26.6.2-x86_64-i386-64bit",
+    "device": "cpu",
+    "torch_num_threads_for_profile": 1,
+    "profiling_environment": "isolated venv with system-site-packages; fvcore installed only in this venv"
+  },
+  "commands": [
+    "python scripts/profile_model.py --config configs/default.json --height 64 --width 64 --fvcore --output PROFILE_64.json",
+    "python scripts/profile_model.py --config configs/default.json --height 96 --width 96 --fvcore --output PROFILE_96.json"
+  ],
+  "profiles": [
+    {
+      "model_config": {
+        "in_channels": 1,
+        "base_channels": 8,
+        "dropout": 0.1,
+        "ablation": "full"
+      },
+      "input_shape": [
+        1,
+        1,
+        64,
+        64
+      ],
+      "output_shape": [
+        1,
+        1,
+        64,
+        64
+      ],
+      "parameters": 1956802,
+      "trainable_parameters": 1956802,
+      "status": "measured on the newly constructed release, not the historical server model",
+      "estimated_supported_ops": 183813088,
+      "unit": "fvcore operations; one fused multiply-add counts as one",
+      "by_operator": {
+        "conv": 176002016,
+        "batch_norm": 1933312,
+        "grid_sampler": 4825088,
+        "adaptive_avg_pool2d": 28672,
+        "upsample_bilinear2d": 729088,
+        "bmm": 294912
+      },
+      "unsupported_ops": {
+        "aten::mean": 10,
+        "aten::sub": 30,
+        "aten::square": 5,
+        "aten::add": 95,
+        "aten::rsqrt": 5,
+        "aten::mul": 140,
+        "aten::meshgrid": 20,
+        "aten::reciprocal": 20,
+        "aten::sum": 43,
+        "aten::div": 22,
+        "aten::softmax": 25,
+        "aten::gelu": 15,
+        "aten::max_pool2d": 5,
+        "aten::feature_dropout": 5
+      },
+      "full_coverage": false,
+      "note": "A partial operator count is not a complete FLOP total and is not comparable with the manuscript until input and conventions match."
+    },
+    {
+      "model_config": {
+        "in_channels": 1,
+        "base_channels": 8,
+        "dropout": 0.1,
+        "ablation": "full"
+      },
+      "input_shape": [
+        1,
+        1,
+        96,
+        96
+      ],
+      "output_shape": [
+        1,
+        1,
+        96,
+        96
+      ],
+      "parameters": 1956802,
+      "trainable_parameters": 1956802,
+      "status": "measured on the newly constructed release, not the historical server model",
+      "estimated_supported_ops": 413909984,
+      "unit": "fvcore operations; one fused multiply-add counts as one",
+      "by_operator": {
+        "conv": 396003296,
+        "batch_norm": 4349952,
+        "grid_sampler": 10856448,
+        "adaptive_avg_pool2d": 64512,
+        "upsample_bilinear2d": 1640448,
+        "bmm": 995328
+      },
+      "unsupported_ops": {
+        "aten::mean": 10,
+        "aten::sub": 30,
+        "aten::square": 5,
+        "aten::add": 95,
+        "aten::rsqrt": 5,
+        "aten::mul": 140,
+        "aten::meshgrid": 20,
+        "aten::reciprocal": 20,
+        "aten::sum": 43,
+        "aten::div": 22,
+        "aten::softmax": 25,
+        "aten::gelu": 15,
+        "aten::max_pool2d": 5,
+        "aten::feature_dropout": 5
+      },
+      "full_coverage": false,
+      "note": "A partial operator count is not a complete FLOP total and is not comparable with the manuscript until input and conventions match."
+    }
+  ],
+  "ablation_participation_check": {
+    "input_shape": [
+      2,
+      1,
+      64,
+      64
+    ],
+    "seed": 2026,
+    "mode": "train",
+    "objective": "BCEWithLogitsLoss",
+    "model_config": {
+      "in_channels": 1,
+      "base_channels": 8,
+      "dropout": 0.1,
+      "ablation": "full"
+    },
+    "rows": [
+      {
+        "ablation": "baseline",
+        "registered_parameters": 821345,
+        "trainable_parameters": 821345,
+        "backward_connected_parameters": 821345,
+        "unused_parameter_names": [],
+        "zero_gradient_tensor_names_at_initialization": [],
+        "finite_gradients": true,
+        "loss": 0.7199863195419312
+      },
+      {
+        "ablation": "csde",
+        "registered_parameters": 1451129,
+        "trainable_parameters": 1451129,
+        "backward_connected_parameters": 1451129,
+        "unused_parameter_names": [],
+        "zero_gradient_tensor_names_at_initialization": [],
+        "finite_gradients": true,
+        "loss": 0.7083643674850464
+      },
+      {
+        "ablation": "samg",
+        "registered_parameters": 1548729,
+        "trainable_parameters": 1548729,
+        "backward_connected_parameters": 1548729,
+        "unused_parameter_names": [],
+        "zero_gradient_tensor_names_at_initialization": [],
+        "finite_gradients": true,
+        "loss": 0.7149759531021118
+      },
+      {
+        "ablation": "dcdf",
+        "registered_parameters": 1956201,
+        "trainable_parameters": 1956201,
+        "backward_connected_parameters": 1956201,
+        "unused_parameter_names": [],
+        "zero_gradient_tensor_names_at_initialization": [],
+        "finite_gradients": true,
+        "loss": 0.7228221297264099
+      },
+      {
+        "ablation": "detail_decoder",
+        "registered_parameters": 1956761,
+        "trainable_parameters": 1956761,
+        "backward_connected_parameters": 1956761,
+        "unused_parameter_names": [],
+        "zero_gradient_tensor_names_at_initialization": [],
+        "finite_gradients": true,
+        "loss": 0.7057578563690186
+      },
+      {
+        "ablation": "selective_skip",
+        "registered_parameters": 1955481,
+        "trainable_parameters": 1955481,
+        "backward_connected_parameters": 1955481,
+        "unused_parameter_names": [],
+        "zero_gradient_tensor_names_at_initialization": [],
+        "finite_gradients": true,
+        "loss": 0.7107966542243958
+      },
+      {
+        "ablation": "full",
+        "registered_parameters": 1956802,
+        "trainable_parameters": 1956802,
+        "backward_connected_parameters": 1956802,
+        "unused_parameter_names": [],
+        "zero_gradient_tensor_names_at_initialization": [
+          "cca.query.weight",
+          "cca.query.bias",
+          "cca.key.weight",
+          "cca.key.bias",
+          "cca.value.weight",
+          "cca.value.bias"
+        ],
+        "finite_gradients": true,
+        "loss": 0.716782808303833
+      }
+    ]
+  },
+  "interpretation": {
+    "operator_count": "fvcore supported-operator estimate; one fused multiply-add is counted as one. Unsupported operators are explicitly listed for each shape.",
+    "coverage": "Partial: these are not full FLOP totals or measured latency. grid_sampler is counted by this fvcore version; softmax, GELU, elementwise normalization and other operations remain unsupported.",
+    "participating_parameters": "A parameter is backward-connected when its .grad is not None after the stated real forward/BCE backward pass. This checks graph participation, not whether every parameter has a nonzero derivative at initialization.",
+    "zero_gradients": "The full model has zero query/key/value CCA gradients initially because its residual gamma starts at zero. These parameters are graph-connected, not unused registered modules.",
+    "historical_comparison": "The current implementation has 1,956,802 registered parameters. No direct equivalence to the historical 1.82 M / 20.05 G table is established."
+  },
+  "runtime_warnings": [
+    "NNPACK could not initialize on this CPU hardware; PyTorch continued successfully."
+  ]
+}

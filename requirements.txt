@@ -1,11 +1,6 @@
-torch>=2.1
-torchvision>=0.16
+# Install the CUDA-compatible torch build first using the official PyTorch selector.
+torch>=2.2
 numpy>=1.24
-opencv-python-headless>=4.8
-Pillow>=10.0
-scikit-learn>=1.3
+Pillow>=9.1
+scikit-learn>=1.2
 scipy>=1.10
-PyYAML>=6.0
-tqdm>=4.66
-fvcore>=0.1.5
-pytest>=7.4

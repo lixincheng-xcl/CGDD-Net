@@ -11,6 +11,4 @@ authors:
   - family-names: Sheng
     given-names: Xiaoqi
 repository-code: "https://github.com/lixincheng-xcl/CGDD-Net"
-license: MIT
-version: "1.0.0"
-date-released: "2026-09-07"
+license: Apache-2.0
