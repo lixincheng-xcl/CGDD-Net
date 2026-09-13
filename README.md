@@ -1,10 +1,28 @@
-# CGDD-Net
+# CGDD-Net: Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation
 
-**Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation**
+<div align="center">
 
-Authors: **Xincheng Li, Xinyu Zhang, Xiaoqi Sheng**.
+**Official PyTorch implementation of CGDD-Net**
 
-School of Computer Science, The University of Auckland, New Zealand; School of Future Technology, South China University of Technology, China.
+<p>
+  <a href="https://github.com/lixincheng-xcl">Xincheng Li</a><sup>1</sup>,
+  <a href="https://github.com/zhangxinyu-xyz">Xinyu Zhang</a><sup>1</sup>,
+  Xiaoqi Sheng<sup>2</sup>
+</p>
+
+<p>
+  <sup>1</sup>School of Computer Science, The University of Auckland, New Zealand<br>
+  <sup>2</sup>School of Future Technology, South China University of Technology, China
+</p>
+
+<p>
+  <a href="https://github.com/lixincheng-xcl/CGDD-Net"><img src="https://img.shields.io/badge/Code-Released-brightgreen"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-3776AB"></a>
+  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.2+-EE4C2C"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue"></a>
+</p>
+
+</div>
 
 This repository provides the PyTorch implementation of the CGDD-Net architecture described in the manuscript. It includes Context-Guided Scale-Adaptive Deformable Encoding (CSDE), Spatially Adaptive Multi-Kernel Gating (SAMG), Dynamic Cross-Scale Detail Fusion (DCDF), detail-guided decoding, selective skip connections, and one criss-cross attention block at the D3 fusion stage.
 
