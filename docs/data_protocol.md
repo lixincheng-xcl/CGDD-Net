@@ -11,7 +11,7 @@ The baseline repository is `VesselSeg-Pytorch-master`. Its original dataset dire
 | CHASE_DB1 | 28 | 999 × 960 | `1st_label` / `mask` | `prepare_dataset/chasedb1.py` selects the first 7 sorted images for testing and the other 21 for training. This divides subject 04's left and right eyes between splits. |
 | HRF | 45 | 3504 × 2336 | `manual1` / `mask` | The attachment contains 15 h, 15 dr, and 15 g images, but no HRF split script or train/validation/test lists. |
 
-The `prepare_dataset/data_path_list` directory contains no actual `.txt` image lists. There is no evidence in this attachment for an existing HRF 15/20 split with ten remaining images, a server STARE five-fold image assignment, or subject-disjoint CHASE server results. This release does not represent newly generated partitions as recovered experimental records.
+The `prepare_dataset/data_path_list` directory contains no actual `.txt` image lists. The directory inspection alone does not establish the historical image assignments. The author subsequently confirmed the manuscript counts in the Table 1 summary below, including HRF 15/20 and STARE five-fold evaluation; exact fold/image membership and the role of HRF's ten remaining images are still unspecified. This release does not represent newly generated partitions as recovered experimental records.
 
 The separate `datasets/augmented` folder contains 80 training images and 20 test images. These derivatives are not independent originals and are excluded from discovery. `mask` denotes field of view (FOV); vessel ground truth is in the label directories listed above.
 
@@ -118,3 +118,18 @@ python scripts/prepare_data.py validate --train my_protocols/HRF/train.json \
 For HRF, the h/dr/g labels describe image categories. The attachment does not establish person-level identity across categories; the new default grouping is therefore image-level. DRIVE and STARE also use image-level grouping unless separate validated subject information is supplied. Only CHASE has explicit left/right eye subject grouping established by the supplied filenames.
 
 The generator stores the seed, strategy and settings in every manifest and sorts output records by ID. For multi-fold validation, each image appears exactly once across outer test folds; the validation fold never contributes training patches within the same outer fold. Use a separate results directory per fold and retain all generated manifests with the corresponding experiment outputs.
+
+## Author-confirmed manuscript split counts
+
+The author has selected the following counts from the supplied Table 1 for the manuscript protocol:
+
+| Dataset | Total images | Train | Test / evaluation |
+|---|---:|---:|---|
+| DRIVE | 40 | 20 | 20 |
+| CHASE_DB1 | 28 | 20 | 8 |
+| STARE | 20 | Per fold | Five-fold evaluation |
+| HRF | 45 | 15 | 20 |
+
+DRIVE uses the official training identifiers 21–40 and test identifiers 01–20, as stated in manuscript v9. The provided table does not specify the validation subset, CHASE_DB1 image/subject membership, STARE fold membership or HRF image membership. HRF's 15 training and 20 test images account for 35 of 45 images; the role of the remaining 10 is unspecified. They are not automatically assigned to validation.
+
+These counts supersede the inherited toolkit example counts for the manuscript description. They are a protocol summary, not executable image-level manifests. New partitions generated with prepare_data.py remain labelled as new experiments and must not be represented as recovered historical splits.
