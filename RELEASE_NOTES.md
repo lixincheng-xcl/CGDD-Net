@@ -1,18 +1,37 @@
-# Source update — 13 September 2026
+# CGDD-Net source release — 13 September 2026
 
-The repository now uses the figure-aligned implementation prepared in the author-specified VesselSeg-Pytorch checkout. The measured full model has 1,956,802 trainable parameters (1.96 M); Adam uses the author-confirmed base learning rate 0.001. Training uses FOV-masked BCE from logits.
+This release synchronizes the public implementation and documentation with the final manuscript configuration.
 
-## Migration from the earlier implementation
+## Manuscript-aligned defaults
 
-- Import `CGDDNet` from `cgddnet.model`; the default input is grayscale with one channel.
-- Use `configs/default.json` instead of the earlier YAML configuration. The previous 2.97 M architecture and its configuration are not interchangeable with this release.
-- Use `train.py` and `evaluate.py` with explicit train/validation/test manifests. The README documents the current CLI; the old `test.py`, `cross_dataset.py` and shell wrappers belong to the earlier interface.
-- Empty split placeholders have been removed. Supply actual manifests or explicitly generate a new experiment protocol with `scripts/prepare_data.py`.
-- The earlier repository remains accessible in Git history, including commit `8d6203424534563f984efb149de9afb212b430e5`.
-- The current source retains the supplied VesselSeg workflow's Apache-2.0 attribution. The previous repository's MIT notice is retained under `LICENSES/legacy-MIT.txt`.
+- Grayscale input with one channel.
+- Encoder widths: `8 / 16 / 32 / 64 / 128`.
+- Shared detail width: `8`.
+- Full model: **1,956,802 trainable parameters (1.96 M)**.
+- Adam base learning rate: **0.001**.
+- FOV-masked BCEWithLogits objective.
+- Linear warmup followed by cosine cycles with restarts.
+- `64x64` training patches and overlapping `96x96` inference patches with stride `16`.
+- Probability averaging in overlapping regions before thresholding at `0.5`.
 
-## Evidence scope
+## Architecture coverage
 
-The manuscript uses 1.96 M parameters and learning rate 0.001. Original server checkpoints, exact split manifests and seed-level outputs are still not included. `results/` contains author-supplied table transcriptions; local synthetic tests are not retinal benchmark reproduction. Historical profiling JSON and provenance hashes retain their measurement-time values. The earlier 20.05 G FLOPs figure is not a measured complete FLOP count for this release.
+The release implements the manuscript's CSDE, SAMG, DCDF, shared detail guidance, selective E4/E1 skips, and a single CCA block after D3 fusion. Main-path channel projections use `1x1 Conv-BN-ReLU`; the prediction head is a bare `1x1` convolution.
 
-No manuscript draft, private author response form, original dataset images, checkpoints or local caches are included in this source update.
+Seven cumulative ablations are supported:
+
+`baseline -> csde -> samg -> dcdf -> detail_decoder -> selective_skip -> full`
+
+## Results and reproducibility
+
+The `results/` directory contains machine-readable transcriptions of the manuscript's main, ablation, and cross-dataset tables. New training and evaluation runs write separate outputs and do not overwrite these manuscript values.
+
+Training records the resolved configuration, environment, data manifests and hashes, training history, and checkpoints. Evaluation can export per-image metrics, probabilities, binary predictions, and provenance.
+
+## Validation
+
+The repository includes unit and synthetic end-to-end tests for model execution, gradient flow, patch inference, metrics, scheduler behavior, checkpoint resume, and output export. These checks verify software behavior; the retinal benchmark results are those reported in the manuscript.
+
+## Attribution
+
+Upstream workflow attribution and corresponding license material are retained in `NOTICE` and `LICENSES/`. Dataset images are not redistributed and remain subject to the original providers' terms.
