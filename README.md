@@ -6,21 +6,34 @@ Authors: **Xincheng Li, Xinyu Zhang, Xiaoqi Sheng**.
 
 School of Computer Science, The University of Auckland, New Zealand; School of Future Technology, South China University of Technology, China.
 
-A PyTorch implementation organized around the manuscript's completed architecture figures and the [VesselSeg-Pytorch](https://github.com/lee-zq/VesselSeg-Pytorch) data/training workflow. It includes CSDE, SAMG, DCDF, detail-guided decoding, selective skips and criss-cross attention, with seven cumulative ablations.
+This repository provides the PyTorch implementation of the CGDD-Net architecture described in the manuscript. It includes Context-Guided Scale-Adaptive Deformable Encoding (CSDE), Spatially Adaptive Multi-Kernel Gating (SAMG), Dynamic Cross-Scale Detail Fusion (DCDF), detail-guided decoding, selective skip connections, and one criss-cross attention block at the D3 fusion stage.
 
 [中文说明](README_zh.md) · [Architecture](docs/architecture.md) · [Data protocol](docs/data_protocol.md) · [Release status](docs/release_status.md)
 
 ![CGDD-Net architecture](assets/architecture.png)
 
-## Release status
+## Manuscript-aligned implementation
 
-This is a newly constructed, figure-aligned implementation. The authors confirm that the manuscript results were verified on their server, but this source release does not contain that server's original checkpoints, run configurations or split manifests. Its synthetic tests verify software behavior, not benchmark reproduction.
+The default model uses one grayscale input channel, encoder widths **8, 16, 32, 64, 128**, and an eight-channel shared detail representation. The full model contains **1,956,802 trainable parameters (1.96 M)**. The base learning rate is **0.001**.
 
-The default implementation has **1,956,802 trainable parameters (1.96 M)** with stage widths **8, 16, 32, 64, 128**. The manuscript now uses this measured parameter count. The reported **20.05 G FLOPs** remains an earlier server measurement whose input and counting convention have not been matched to this release. The supported-operator estimates in `docs/profile_measured.json` are partial counts, not a replacement for full FLOPs or measured latency.
+The implementation follows the current manuscript design choices:
+
+- CSDE uses four equal-width attention heads with base spacings `(1, 3, 5, 7)` and nine sampling points per head.
+- Each head predicts nine 2-D offsets through a zero-initialized `3x3` convolution. The query uses the center-point offset; keys and values use all nine locations.
+- Sampling uses bilinear interpolation, border padding, and `align_corners=False`.
+- SAMG uses dense `1x1`, `3x3`, `5x5`, and `7x7` CBR branches with global-local adaptive gating.
+- DCDF aligns the E2/E3/E4 detail features to the E3 resolution and projects them to the shared detail width.
+- The shared detail representation is reused at D3, D2, and D1. Direct encoder skips are retained at E4 and E1.
+- Main-path down/up channel projections use `1x1 Conv-BN-ReLU`; the prediction head is a bare `1x1` convolution producing logits.
+- A single CCA block is applied after the D3 fusion unit.
+
+The seven cumulative ablations are:
+
+`baseline -> csde -> samg -> dcdf -> detail_decoder -> selective_skip -> full`
 
 ## Installation
 
-Python 3.10 or newer is required. Install a suitable PyTorch build using the [official installation selector](https://pytorch.org/get-started/locally/), then:
+Python 3.10 or newer is recommended. Install a suitable PyTorch build using the [official installation selector](https://pytorch.org/get-started/locally/), then:
 
 ```bash
 python -m pip install -e '.[dev]'
@@ -28,17 +41,17 @@ python -m pytest -q
 python scripts/smoke_test.py
 ```
 
-Local CPU validation used Python 3.12.2 and PyTorch 2.3.1. The author-reported experiment environment is NVIDIA H200 141 GB, PyTorch 2.13.0 and CUDA 13.2. No CUDA extension or third-party deformable-convolution build is required.
+The author-reported experimental environment is NVIDIA H200 141 GB, PyTorch 2.13.0, and CUDA 13.2. The repository CI and smoke tests are functional checks and do not replace the retinal benchmark experiments reported in the manuscript.
 
-## Data and explicit splits
+## Data preparation
 
-Obtain DRIVE, STARE, CHASE_DB1 and HRF from their original providers, retain their supplied labels/FOV masks, and keep the image data outside this repository. The inherited directory layout and manifest schema are documented in [data_protocol.md](docs/data_protocol.md).
+Obtain DRIVE, STARE, CHASE_DB1, and HRF from their original providers and keep the image data outside the repository. Dataset manifests specify image, label, optional FOV, case ID, and dataset identity. Split validation checks image IDs, original identities, subject identities where available, file paths, and duplicate image content before patch sampling.
 
 ```bash
 python scripts/prepare_data.py inspect --data-root ../datasets
 ```
 
-Use the actual train/validation/test manifests from your experiment. If starting a **new experiment**, the following explicitly creates a new DRIVE protocol: it preserves the official 20 test images and selects 2 validation images from the 20-image development set.
+For a new DRIVE experiment, for example:
 
 ```bash
 python scripts/prepare_data.py generate --data-root ../datasets \
@@ -48,68 +61,45 @@ python scripts/prepare_data.py validate --data-root ../datasets \
   --test splits/new_drive/test.json
 ```
 
-CHASE eyes are grouped by subject. Other new holdouts and grouped folds are available through `--help`. Generated protocols are labelled as new experiments, not the historical manuscript partitions. No dataset images or fabricated result files are included. Training/validation separation occurs before patch sampling.
+Newly generated protocols are labelled as new experiments and are not presented as historical manuscript split manifests.
 
 ## Training and evaluation
 
 ```bash
 python train.py --config configs/default.json \
-  --train-manifest splits/new_drive/train.json --val-manifest splits/new_drive/val.json \
-  --data-root ../datasets --output runs/drive_seed42 --device cuda
+  --train-manifest splits/new_drive/train.json \
+  --val-manifest splits/new_drive/val.json \
+  --data-root ../datasets \
+  --output runs/drive_seed42 \
+  --device cuda
 
-python evaluate.py --checkpoint runs/drive_seed42/best.pt \
-  --manifest splits/new_drive/test.json --data-root ../datasets \
-  --output runs/drive_seed42/test --device cuda
+python evaluate.py \
+  --checkpoint runs/drive_seed42/best.pt \
+  --manifest splits/new_drive/test.json \
+  --data-root ../datasets \
+  --output runs/drive_seed42/test \
+  --device cuda
 ```
 
-Choose `--device cpu` for a small functional check. The base learning rate in `configs/default.json` is `0.001`, confirmed by the author for the reported server experiments on 2026-09-10. Other configuration values remain release defaults unless separately confirmed; the file is not a recovered server configuration. Adam uses linear warmup followed by cosine restarts; the threshold is 0.5. The model emits logits and uses numerically stable FOV-weighted binary cross entropy. Inference averages overlapping patch probabilities before thresholding.
+The reference configuration uses Adam, base learning rate `0.001`, batch size `64`, at most `50` epochs, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Linear warmup is followed by cosine cycles with restarts. Model selection uses mean validation AUC with early stopping.
 
-A run stores `config.json`, `environment.json`, copied manifests and their hashes, `history.csv`, `best.pt`, `latest.pt`, and `training_summary.json`. Evaluation exports per-image probabilities, binary predictions, `per_image.csv`, `summary.json`, and checkpoint/configuration provenance. Metrics are computed inside each image's FOV and then averaged without pixel-count weighting. Undefined AUCs remain explicit. Image-to-image standard deviation must not be reported as seed-to-seed training variation. Optional resizing changes the evaluation resolution; each CSV row records original and evaluated dimensions.
+Inference uses overlapping `96x96` patches with stride `16`. Each patch output is converted from logits to probabilities with sigmoid; overlapping probabilities are averaged before applying the default threshold `0.5`.
 
-Resume using the **same configuration, manifests and original output directory**:
-
-```bash
-python train.py --config configs/default.json \
-  --train-manifest splits/new_drive/train.json --val-manifest splits/new_drive/val.json \
-  --data-root ../datasets --output runs/drive_seed42 --device cuda \
-  --resume runs/drive_seed42/latest.pt
-```
-
-The matching `best.pt` must remain alongside the resume checkpoint. This preserves the historical best model even if resumed epochs do not improve it. Checkpoints are loaded with PyTorch's weights-only loader.
-
-For cross-dataset evaluation, keep the source checkpoint/configuration fixed and pass a target dataset manifest to `evaluate.py`. Do not tune the checkpoint or threshold against the target test labels.
-
-## Ablations, profiling and statistics
-
-Set `model.ablation` to one of:
-
-`baseline`, `csde`, `samg`, `dcdf`, `detail_decoder`, `selective_skip`, `full`.
-
-The implementation choices for partial configurations and their actual parameter counts are documented in `docs/architecture.md`. Use matched seeds and partitions for new comparisons.
-
-```bash
-python scripts/profile_model.py --config configs/default.json --height 96 --width 96
-# Optional operator-count estimate; unsupported operations are always disclosed:
-python -m pip install -e '.[profile]'
-python scripts/profile_model.py --config configs/default.json --height 96 --width 96 --fvcore
-
-# Aggregate actual independent training runs; input schema is in --help:
-python scripts/summarize_runs.py completed_runs.csv --reference CGDD-Net --output statistics.json
-```
-
-The statistics utility computes sample SD across seed-level rows and, if requested, two-sided paired Wilcoxon tests with Holm correction within each dataset. It does not infer a test from a table of means and SDs and does not retroactively validate the manuscript's existing p-values.
+Metrics are computed inside each image's FOV and then averaged without pixel-count weighting. The evaluator exports per-image metrics and probability maps when requested.
 
 ## Loss function
 
 Training minimizes FOV-masked binary cross entropy from logits:
 
 ```python
-loss = (F.binary_cross_entropy_with_logits(logits, target, reduction="none") * fov).sum() / fov.sum()
+loss = (
+    F.binary_cross_entropy_with_logits(logits, target, reduction="none") * fov
+).sum() / fov.sum()
 ```
 
-Only pixels inside the FOV contribute. Empty FOV masks are rejected. There are no additional Dice, boundary, topology or deep-supervision loss terms and no class reweighting. Sigmoid is applied for inference, not before this loss.
+Only pixels inside the FOV contribute. There are no additional Dice, boundary, topology, class-reweighting, or deep-supervision loss terms.
 
-## Author-supplied paper values
+## Reported manuscript results
 
 | Dataset | SE | SP | ACC | F1 | AUC |
 |---|---:|---:|---:|---:|---:|
@@ -118,12 +108,31 @@ Only pixels inside the FOV contribute. Empty FOV masks are rejected. There are n
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-Machine-readable transcriptions and provenance are under `results/`. They are independent of locally generated test outputs. Hyperparameter Figure 8 is under author revision and is not used to choose this release's defaults.
+Machine-readable transcriptions of the manuscript's main, ablation, and cross-dataset tables are stored under `results/`. They mirror the manuscript values and are kept separate from locally generated evaluation outputs.
+
+## Profiling and statistics
+
+```bash
+python scripts/profile_model.py --config configs/default.json --height 96 --width 96
+```
+
+`docs/profile_measured.json` records the measured **1,956,802** trainable parameters and partial supported-operation estimates for the current implementation. These partial operator counts are not presented as a complete FLOP or hardware-latency claim in the manuscript.
+
+For future repeated-run analyses:
+
+```bash
+python scripts/summarize_runs.py completed_runs.csv \
+  --reference CGDD-Net --output statistics.json
+```
+
+The statistics utility operates on actual seed-level run records. The current manuscript Table 7 is a descriptive AUC comparison and is not derived from this prospective utility.
+
+## Reproducibility records
+
+A training run stores its resolved configuration, environment metadata, copied manifests and hashes, history, best/latest checkpoints, and training summary. Evaluation can export per-image metrics, probabilities, binary predictions, and provenance. This makes newly executed experiments traceable to a fixed configuration and dataset manifest.
 
 ## Publishing and attribution
 
-This folder is the repository root: upload its contents to GitHub, or use `python scripts/build_release.py` to create a clean source ZIP. The source pack excludes datasets, checkpoints, local environments and runtime outputs. See [release notes](RELEASE_NOTES.md) for the migration from the earlier YAML-based implementation.
+The software is distributed under the repository license; dataset access and redistribution remain governed by the original dataset providers. Upstream workflow attribution is recorded in `NOTICE` and the corresponding license material is retained under `LICENSES/`.
 
-See [中文归档说明](docs/reproducibility_zh.md) for how to attach final configurations, split manifests and actual run outputs to a fixed release. Add the final paper citation and author metadata when approved; no journal acceptance or DOI is asserted here.
-
-The inherited workflow is acknowledged in `NOTICE` and its Apache-2.0 license is retained in `LICENSE`. The earlier repository's MIT notice is preserved in `LICENSES/legacy-MIT.txt`. Dataset access and redistribution are governed by the original providers, separately from the software license.
+The manuscript citation metadata will be updated when final publication information becomes available; no journal acceptance or DOI is asserted here.
