@@ -36,10 +36,10 @@
   "default_parameters": 1956802,
   "benchmark_reproduction": false,
   "remote_ci_run": false,
-  "published_to_github": false,
+  "published_to_github": true,
   "notes": [
     "Two inherited optional pandas acceleration warnings in the local Anaconda environment; tests passed.",
-    "The figure-aligned implementation is not yet tied to the historical server model/configuration."
+    "The public implementation and documentation are synchronized to the final manuscript configuration. Unit and smoke tests validate software behavior and do not independently reproduce the reported retinal benchmark results."
   ],
   "latest_local_validation": {
     "date": "2026-09-13",
