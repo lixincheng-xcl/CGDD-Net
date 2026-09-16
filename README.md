@@ -63,7 +63,7 @@ The author-reported experimental environment is NVIDIA H200 141 GB, PyTorch 2.13
 
 ## Data preparation
 
-Obtain DRIVE, STARE, CHASE_DB1, and HRF from their original providers and keep the image data outside the repository. Dataset manifests specify image, label, optional FOV, case ID, and dataset identity. Split validation checks image IDs, original identities, subject identities where available, file paths, and duplicate image content before patch sampling.
+Obtain DRIVE, STARE, CHASE_DB1, and HRF from their original providers and keep the image data outside the repository. Dataset manifests specify image, label, optional FOV, case ID, and dataset identity. Split validation checks image IDs, original identities, subject identities where available, file paths, and duplicate image content before patch sampling. The manuscript reports DRIVE `20/20`, CHASE_DB1 `20/8`, STARE five-fold evaluation, and HRF `25/20` train-test protocols.
 
 ```bash
 python scripts/prepare_data.py inspect --data-root ../datasets
@@ -99,7 +99,7 @@ python evaluate.py \
   --device cuda
 ```
 
-The reference configuration uses Adam, base learning rate `0.001`, batch size `64`, at most `50` epochs, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Linear warmup is followed by cosine cycles with restarts. Model selection uses mean validation AUC with early stopping.
+The reference configuration uses Adam, base learning rate `0.001`, batch size `64`, at most `50` epochs, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Linear warmup is followed by cosine cycles with restarts. The manuscript reports this fixed training configuration; validation-based checkpoint selection in newly executed repository runs is a reproducibility feature and does not redefine the manuscript-reported protocol.
 
 Inference uses overlapping `96x96` patches with stride `16`. Each patch output is converted from logits to probabilities with sigmoid; overlapping probabilities are averaged before applying the default threshold `0.5`.
 
@@ -134,7 +134,7 @@ Machine-readable transcriptions of the manuscript's main, ablation, and cross-da
 python scripts/profile_model.py --config configs/default.json --height 96 --width 96
 ```
 
-`docs/profile_measured.json` records the measured **1,956,802** trainable parameters and partial supported-operation estimates for the current implementation. These partial operator counts are not presented as a complete FLOP or hardware-latency claim in the manuscript.
+The manuscript reports **1.96 M** trainable parameters and **29.96 GFLOPs** for the fixed complexity-comparison configuration. `docs/profile_measured.json` records direct parameter measurement and partial supported-operation estimates for the public implementation; those diagnostic partial counts are not treated as a separate replacement for the manuscript's reported model-level FLOP value or as a hardware-latency measurement.
 
 For future repeated-run analyses:
 
@@ -143,7 +143,7 @@ python scripts/summarize_runs.py completed_runs.csv \
   --reference CGDD-Net --output statistics.json
 ```
 
-The statistics utility operates on actual seed-level run records. The current manuscript Table 7 is a descriptive AUC comparison and is not derived from this prospective utility.
+The manuscript Table 7 reports AUC as mean ± standard deviation and uses the Wilcoxon rank-sum test with respect to CGDD-Net, with `p < 0.05` treated as statistically significant. The repository statistics utility remains available for newly generated run-level analyses.
 
 ## Reproducibility records
 
