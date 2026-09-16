@@ -1,10 +1,10 @@
-# Release status — 13 September 2026
+# Release status — 16 September 2026
 
 ## Manuscript-aligned implementation
 
 The default implementation follows the current CGDD-Net manuscript architecture and confirmed settings:
 
-- one grayscale input channel;
+- one grayscale input channel scaled to `[0,1]`;
 - encoder widths 8, 16, 32, 64, 128;
 - shared detail width 8;
 - four CSDE attention heads with base spacings 1, 3, 5, and 7;
@@ -47,7 +47,7 @@ The reported main results are:
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-The current manuscript Table 7 is a descriptive AUC comparison. The repository's optional repeated-run statistics utility is intended for future seed-level run records and is not used to generate Table 7.
+The manuscript dataset protocols are DRIVE 20/20, CHASE_DB1 20/8, STARE five-fold evaluation, and HRF 25/20. The current manuscript Table 7 reports AUC as mean ± standard deviation and uses the Wilcoxon rank-sum test with respect to CGDD-Net, with `p < 0.05` treated as statistically significant.
 
 ## Experimental and software environments
 
@@ -59,7 +59,7 @@ Repository CI and local smoke testing may use different CPU/PyTorch versions; th
 
 The implementation's parameter count is measured directly from the registered model parameters and is **1,956,802** for the default full model.
 
-`docs/profile_measured.json` also records supported-operation estimates for selected input sizes together with unsupported operators. These partial counts are retained as implementation diagnostics and are not presented in the manuscript as complete FLOP totals or hardware latency measurements.
+The manuscript reports **29.96 GFLOPs** for the fixed model-forward complexity comparison in Table 10. `docs/profile_measured.json` records supported-operation estimates for selected input sizes together with unsupported operators for the public implementation. Those partial counts are retained as implementation diagnostics and are not treated as a separate replacement for the manuscript's reported 29.96 GFLOPs or as hardware-latency measurements.
 
 ## Reproducibility records for new runs
 
@@ -72,7 +72,7 @@ A new training run stores:
 - best/latest checkpoints;
 - best validation AUC and training summary.
 
-Evaluation can export per-image metrics, probability maps, binary predictions, and run provenance. Dataset split validation checks case identity, subject identity where available, file paths, and duplicate image content before patch sampling.
+The validation-based checkpointing available to newly executed repository runs is a reproducibility feature; the manuscript itself reports its fixed training configuration without redefining the published benchmark results through these new-run manifests. Evaluation can export per-image metrics, probability maps, binary predictions, and run provenance. Dataset split validation checks case identity, subject identity where available, file paths, and duplicate image content before patch sampling.
 
 ## Source and attribution
 
