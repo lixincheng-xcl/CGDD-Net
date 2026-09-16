@@ -1,10 +1,10 @@
-# CGDD-Net source release — 13 September 2026
+# CGDD-Net source release — 16 September 2026
 
 This release synchronizes the public implementation and documentation with the final manuscript configuration.
 
 ## Manuscript-aligned defaults
 
-- Grayscale input with one channel.
+- Grayscale input with one channel, scaled to `[0,1]`.
 - Encoder widths: `8 / 16 / 32 / 64 / 128`.
 - Shared detail width: `8`.
 - Full model: **1,956,802 trainable parameters (1.96 M)**.
@@ -13,6 +13,7 @@ This release synchronizes the public implementation and documentation with the f
 - Linear warmup followed by cosine cycles with restarts.
 - `64x64` training patches and overlapping `96x96` inference patches with stride `16`.
 - Probability averaging in overlapping regions before thresholding at `0.5`.
+- Manuscript dataset protocols: DRIVE `20/20`, CHASE_DB1 `20/8`, STARE five-fold evaluation, and HRF `25/20`.
 
 ## Architecture coverage
 
@@ -24,7 +25,9 @@ Seven cumulative ablations are supported:
 
 ## Results and reproducibility
 
-The `results/` directory contains machine-readable transcriptions of the manuscript's main, ablation, and cross-dataset tables. New training and evaluation runs write separate outputs and do not overwrite these manuscript values.
+The `results/` directory contains machine-readable transcriptions of the final manuscript's main, ablation, and cross-dataset tables. New training and evaluation runs write separate outputs and do not overwrite these manuscript values.
+
+The manuscript Table 7 reports AUC as mean ± standard deviation and uses the Wilcoxon rank-sum test with respect to CGDD-Net, with `p < 0.05` treated as statistically significant. The manuscript Table 10 reports **29.96 GFLOPs** for the fixed model-forward complexity comparison together with **1.96 M** trainable parameters.
 
 Training records the resolved configuration, environment, data manifests and hashes, training history, and checkpoints. Evaluation can export per-image metrics, probabilities, binary predictions, and provenance.
 
