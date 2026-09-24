@@ -1,4 +1,4 @@
-# Release status — 16 September 2026
+# Release status — 25 September 2026
 
 ## Manuscript-aligned implementation
 
@@ -15,9 +15,10 @@ The default implementation follows the current CGDD-Net manuscript architecture 
 - one CCA block after D3 fusion;
 - FOV-masked BCEWithLogits loss;
 - Adam with base learning rate 0.001;
+- maximum training budget of 100 epochs (author-confirmed 25 September 2026);
 - overlapping-patch probability averaging for inference.
 
-The complete model contains **1,956,802 trainable parameters (1.96 M)**.
+The complete model contains **1,956,802 trainable parameters (1.96 M)**. The earlier public default of 50 training epochs was a release-default mismatch and has been corrected to the author-confirmed 100-epoch maximum; no manuscript benchmark values were changed by this synchronization.
 
 ## Functional validation
 

@@ -1,5 +1,5 @@
 {
-  "description": "The base learning rate 0.001 was confirmed by the author for the reported server experiments on 2026-09-10. Other values remain release defaults unless separately confirmed; this is not a recovered server run configuration.",
+  "description": "The base learning rate 0.001 was confirmed by the author for the reported server experiments on 2026-09-10, and the maximum training budget of 100 epochs was confirmed by the author on 2026-09-25. Other values remain release defaults unless separately confirmed; this is not a recovered server run configuration.",
   "model": {
     "in_channels": 1,
     "base_channels": 8,
@@ -13,7 +13,7 @@
   },
   "training": {
     "seed": 42,
-    "epochs": 50,
+    "epochs": 100,
     "batch_size": 64,
     "patch_size": 64,
     "patches_per_epoch": 150000,

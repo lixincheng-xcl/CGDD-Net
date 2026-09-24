@@ -99,7 +99,7 @@ python evaluate.py \
   --device cuda
 ```
 
-The reference configuration uses Adam, base learning rate `0.001`, batch size `64`, at most `50` epochs, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Linear warmup is followed by cosine cycles with restarts. The manuscript reports this fixed training configuration; validation-based checkpoint selection in newly executed repository runs is a reproducibility feature and does not redefine the manuscript-reported protocol.
+The reference configuration uses Adam, base learning rate `0.001`, batch size `64`, at most `100` epochs, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Linear warmup is followed by cosine cycles with restarts. The 100-epoch maximum was author-confirmed on 25 September 2026; the earlier public default of 50 epochs has been corrected. Validation-based checkpoint selection in newly executed repository runs is a reproducibility feature and does not redefine the manuscript-reported protocol.
 
 Inference uses overlapping `96x96` patches with stride `16`. Each patch output is converted from logits to probabilities with sigmoid; overlapping probabilities are averaged before applying the default threshold `0.5`.
 

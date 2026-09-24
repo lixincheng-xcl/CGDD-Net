@@ -12,6 +12,8 @@
     "input_channels": 1,
     "preprocessing": "grayscale scaled to [0,1]",
     "base_learning_rate": 0.001,
+    "max_epochs": 100,
+    "max_epochs_confirmation_date": "2026-09-25",
     "loss": "FOV-masked BCEWithLogits",
     "inference_patch": 96,
     "inference_stride": 16,
@@ -31,5 +33,5 @@
     "ablation_results": "paper_ablation.csv",
     "cross_dataset_results": "paper_transfer.csv"
   },
-  "note": "These CSV files mirror the final manuscript tables. New training/evaluation runs write separate outputs and do not overwrite the manuscript result transcriptions."
+  "note": "These CSV files mirror the final manuscript tables. The 100-epoch maximum was author-confirmed on 2026-09-25 and synchronized with the public default configuration. New training/evaluation runs write separate outputs and do not overwrite the manuscript result transcriptions."
 }

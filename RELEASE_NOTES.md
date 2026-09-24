@@ -2,6 +2,13 @@
 
 This release synchronizes the public implementation and documentation with the final manuscript configuration.
 
+## 25 September 2026 training-budget synchronization
+
+- The manuscript training maximum is **100 epochs**, author-confirmed on 25 September 2026.
+- The earlier public default of 50 epochs in `configs/default.json` and the READMEs was corrected to 100.
+- This synchronization changes the training-budget metadata/default only; it does not alter the reported manuscript benchmark values.
+- Other historical run details, including checkpoint-selection behavior, remain distinct provenance items unless supported by the original run records.
+
 ## Manuscript-aligned defaults
 
 - Grayscale input with one channel, scaled to `[0,1]`.
@@ -9,6 +16,7 @@ This release synchronizes the public implementation and documentation with the f
 - Shared detail width: `8`.
 - Full model: **1,956,802 trainable parameters (1.96 M)**.
 - Adam base learning rate: **0.001**.
+- Maximum training budget: **100 epochs**.
 - FOV-masked BCEWithLogits objective.
 - Linear warmup followed by cosine cycles with restarts.
 - `64x64` training patches and overlapping `96x96` inference patches with stride `16`.

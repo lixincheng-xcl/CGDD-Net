@@ -2,6 +2,7 @@
   "schema_version": 1,
   "measured_at_utc": "2026-09-10T00:04:16.063016+00:00",
   "status": "Measured on the newly constructed release; not validation of the historical manuscript or H200 results.",
+  "post_measurement_note": "On 2026-09-25, training.epochs was changed from 50 to the author-confirmed 100. This epoch-only synchronization does not change the model graph or the profiling inputs; source_sha256 below intentionally records the snapshot used for the measurement.",
   "parameters": 1956802,
   "trainable_parameters": 1956802,
   "resolved_model_config": {
