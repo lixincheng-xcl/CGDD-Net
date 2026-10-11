@@ -81,6 +81,12 @@ python scripts/prepare_data.py validate --data-root ../datasets \
 
 Newly generated protocols are labelled as new experiments and are not presented as historical manuscript split manifests.
 
+## 📦 Pretrained Models
+
+Check the [Releases](https://github.com/lixincheng-xcl/CGDD-Net/releases) page for dataset-specific checkpoints. **No pretrained checkpoint release is currently available.**
+
+For inference with a locally trained model, use the run's `best.pt` checkpoint and its matching configuration in the evaluation command below.
+
 ## Training and evaluation
 
 ```bash
@@ -155,4 +161,24 @@ A training run stores its resolved configuration, environment metadata, copied m
 
 The software is distributed under the repository license; dataset access and redistribution remain governed by the original dataset providers. Upstream workflow attribution is recorded in `NOTICE` and the corresponding license material is retained under `LICENSES/`.
 
-The manuscript citation metadata will be updated when final publication information becomes available; no journal acceptance or DOI is asserted here.
+## 📖 Citation
+
+If you find this work helpful, please cite the [arXiv preprint](https://arxiv.org/abs/2610.05078):
+
+```bibtex
+@misc{li2026cgddnet,
+  title         = {{CGDD-Net}: Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation},
+  author        = {Xincheng Li and Xiaoqi Sheng and Xinyu Zhang},
+  year          = {2026},
+  eprint        = {2610.05078},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2610.05078}
+}
+```
+
+---
+
+<p align="center">
+  ⭐ <strong>If you find this repository useful, please consider giving it a star!</strong>
+</p>
