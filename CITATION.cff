@@ -6,9 +6,9 @@ authors:
   - family-names: Li
     given-names: Xincheng
     orcid: "https://orcid.org/0009-0007-2730-2737"
-  - family-names: Zhang
-    given-names: Xinyu
   - family-names: Sheng
     given-names: Xiaoqi
+  - family-names: Zhang
+    given-names: Xinyu
 repository-code: "https://github.com/lixincheng-xcl/CGDD-Net"
 license: Apache-2.0

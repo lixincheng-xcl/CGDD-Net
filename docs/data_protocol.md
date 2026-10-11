@@ -1,45 +1,43 @@
 # Data protocol and provenance
 
-## What the supplied attachment establishes
+## Reporting protocol and acquisition field of view
 
-The baseline repository is `VesselSeg-Pytorch-master`. Its original dataset directories were inspected on 2026-09-10 without altering the supplied files.
+The author requested the following reporting settings on 12 October 2026. Counts are train/test image counts, not recovered experiment manifests.
 
-| Dataset | Original images | Native width × height | Labels / FOV masks | Existing image split evidence |
-|---|---:|---|---|---|
-| DRIVE | 40 | 565 × 584 | `1st_manual` / `mask` | The supplied `training` and `test` folders contain 20 images each. |
-| STARE | 20 | 700 × 605 | `1st_labels_ah` / `mask` | `prepare_dataset/stare.py` selects sorted indices `[0:5]` for testing and the other 15 for training. This is a single example holdout, not a five-fold definition. |
-| CHASE_DB1 | 28 | 999 × 960 | `1st_label` / `mask` | `prepare_dataset/chasedb1.py` selects the first 7 sorted images for testing and the other 21 for training. This divides subject 04's left and right eyes between splits. |
-| HRF | 45 | 3504 × 2336 | `manual1` / `mask` | The attachment contains 15 h, 15 dr, and 15 g images, but no HRF split script or train/test lists. |
+| Dataset | Original images | Native width x height | Acquisition FOV | Train / test |
+|---|---:|---|---:|---:|
+| DRIVE | 40 | 565 x 584 | 45° | 20 / 20 |
+| CHASE_DB1 | 28 | 999 x 960 | 30° | 20 / 8 |
+| STARE | 20 | 700 x 605 | 35° | 10 / 10 |
+| HRF | 45 | 3504 x 2336 | 60° | 25 / 20 |
 
-The `prepare_dataset/data_path_list` directory contains no actual `.txt` image lists. The directory inspection alone does not establish the historical image assignments. The author-confirmed manuscript protocol is summarized below and takes precedence for manuscript reporting: DRIVE 20/20, CHASE_DB1 20/8, STARE five-fold evaluation, and HRF 25/20. This release does not represent newly generated partitions as recovered experimental records.
+The DRIVE, CHASE_DB1, and STARE angular values follow the author-specified Table 1 update. HRF is verified against Section 3 of Odstrcilik et al., *Retinal vessel segmentation by improved matched filtering: evaluation on a new high-resolution fundus image database*, IET Image Processing 7(4), 373-383 (2013), [doi:10.1049/iet-ipr.2012.0455](https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-ipr.2012.0455). That original segmentation dataset contains 45 images acquired with a CANON CF-60 UVi / EOS-20D system at 60°. The [provider's page](https://www5.cs.fau.de/research/data/fundus-images/) separately describes an image-quality-assessment dataset acquired at 45°; it must not be substituted for the segmentation dataset.
 
-The separate `datasets/augmented` folder contains 80 training images and 20 test images. These derivatives are not independent originals and are excluded from discovery. `mask` denotes field of view (FOV); vessel ground truth is in the label directories listed above.
+An angular FOV is an acquisition property. The manifest field `fov` instead identifies a binary pixel mask defining the evaluated image region. An angle does not create or replace such a mask.
 
-The baseline's `function.py` divides a pool of extracted patches into training and validation subsets. That procedure can place patches from the same original image in both subsets. The new release requires separate image manifests before any patches are extracted, and CHASE grouping additionally keeps both eyes of each child together.
+The supplied manuscript previously described STARE as five-fold evaluation. The requested change to 10/10 does not establish which images produced the existing results. Original split IDs, checkpoint-selection records, and the association between the STARE scores and the requested protocol remain pending. Existing result CSVs are preserved as manuscript transcriptions, not labelled as newly rerun 10/10 results. See `results/provenance.json` and `splits/protocol_status.json`.
 
-## Preprocessing used by this release
+## Evidence and original data
 
-The manuscript and current reference configuration use one grayscale input channel scaled to `[0,1]`. `color_mode: gray` explicitly selects Pillow's grayscale conversion followed by division by 255. The manuscript does not use CLAHE, gamma correction, ImageNet normalization, or target-domain re-estimation of normalization statistics.
+Obtain data from their original providers; do not commit images or derivative patches. The earlier inspected attachment contained 40 DRIVE, 20 STARE, 28 CHASE_DB1, and 45 HRF originals. DRIVE's supplied training/test directories each contained 20 images. The legacy example scripts selected 15/5 STARE and 21/7 CHASE splits; the latter divided one child's eyes between partitions. These were legacy examples, not recovered CGDD-Net experiment manifests. Original image assignments for the reported CHASE, STARE, and HRF experiments were not supplied.
 
-The manuscript-aligned configuration schema is:
+The earlier `datasets/augmented` directory contained derivatives, not additional independent originals, and is excluded from discovery. Legacy patch-level train/validation splitting is not used to establish image independence. New experiments validate original-image and available subject identities before extracting patches. Both CHASE eyes of a child must remain in one partition. HRF has 15 healthy, 15 diabetic-retinopathy, and 15 glaucoma images; its current reporting count is 25/20, superseding the old incomplete 15/20 metadata.
+
+## Preprocessing and evaluation
+
+The reference configuration uses one grayscale channel scaled to `[0,1]`, with no CLAHE, gamma correction, ImageNet normalization, or target-statistics re-estimation. The preprocessing settings are:
 
 ```json
 {"color_mode": "gray", "max_side": null, "pad_multiple": 1}
 ```
 
-- `color_mode`: `gray` selects the one-channel manuscript configuration; `rgb` remains supported for separate new experiments when the model input channels are changed accordingly.
-- `max_side`: optional maximum image side. Larger images are shrunk uniformly to preserve aspect ratio; images are never stretched to a square. This option changes the input resolution and must be recorded in the experiment configuration.
-- `pad_multiple`: optional padding on the bottom and right. Padded label and FOV values are zero; padding never creates evaluable background pixels.
+`max_side` optionally shrinks images while preserving aspect ratio; it changes the evaluated geometry and must be recorded for any new experiment. `pad_multiple` adds bottom/right padding only. Image resizing uses bilinear interpolation; labels and FOV masks use nearest-neighbor interpolation. Padded mask values are zero. Masks encoded as 0/1 or 0/255 are accepted. A missing FOV is explicit (`null`) and means evaluation on the full original image; empty masks and incompatible shapes are rejected. Record mask origin rather than inferring it from the angular FOV.
 
-Images use bilinear interpolation when shrinking; ground truth and FOV masks use nearest-neighbor interpolation. Binary masks stored as either 0/1 or 0/255 are supported. A missing FOV is explicit (`null`) and means the entire original image is evaluated. Every supplied original dataset has FOV masks, so generated manifests use them. Empty FOV masks and mismatched image/label/FOV shapes are rejected.
+Training patches are sampled from original images or explicitly recorded resized images. Flips and right-angle rotations are applied jointly to image, label, and FOV; derivatives must retain original identity. Call `PatchDataset.set_epoch(epoch)` and use fresh or nonpersistent workers so the epoch-dependent sample stream changes as intended. The cache is configurable; HRF images can require substantial host memory.
 
-`load_case` returns the processed image dimensions. With the manuscript defaults, these are the native dimensions. If `max_side` or `pad_multiple` is changed for a new experiment, downstream predictions are at the resized/padded resolution unless the evaluator explicitly restores their geometry. Record the original and evaluated shapes, and do not compare metrics at different resolutions as if they used an identical protocol. The FOV excludes padded pixels but does not reverse a resize.
+Inference averages sigmoid probabilities from overlapping 96x96 patches with stride 16 before applying threshold 0.5. Metrics are computed per image inside its FOV and then averaged without pixel-count weighting. AUC uses reconstructed probabilities. Resized/padded outputs must not be compared as if they had identical native geometry without documenting restoration and evaluation settings.
 
-Patch sampling uses original images or explicitly resized images, chooses a point inside the FOV, and crops a patch around that point. Images smaller than the patch are zero-padded. Horizontal/vertical flips and right-angle rotations are applied jointly to image, label and FOV; rectangular patches only use rotations that preserve their shape. No derivative image can enter validation or testing as an independent sample.
-
-`PatchDataset.set_epoch(epoch)` changes the deterministic sample stream. The training entry point should call it once per epoch and recreate workers or use nonpersistent DataLoader workers so worker copies see the changed epoch. Cached cases are stored as uint8 to reduce memory; `cache_size` can bound the number of retained cases. High-resolution HRF data can still require substantial host RAM when all images are cached or replicated across DataLoader workers.
-
-## Portable manifest format
+## Portable manifest and validation
 
 ```json
 {
@@ -50,86 +48,54 @@ Patch sampling uses original images or explicitly resized images, chooses a poin
   "strategy": "holdout",
   "seed": 42,
   "data_root": "../../datasets",
-  "records": [
-    {
-      "id": "CHASEDB1/Image_01L",
-      "original_id": "CHASEDB1/Image_01L",
-      "dataset": "CHASEDB1",
-      "subject": "CHASEDB1:01",
-      "image": "CHASEDB1/images/Image_01L.jpg",
-      "label": "CHASEDB1/1st_label/Image_01L_1stHO.png",
-      "fov": "CHASEDB1/mask/Image_01L.png"
-    }
-  ]
+  "records": [{
+    "id": "CHASEDB1/Image_01L",
+    "original_id": "CHASEDB1/Image_01L",
+    "dataset": "CHASEDB1",
+    "subject": "CHASEDB1:01",
+    "image": "CHASEDB1/images/Image_01L.jpg",
+    "label": "CHASEDB1/1st_label/Image_01L_1stHO.png",
+    "fov": "CHASEDB1/mask/Image_01L.png"
+  }]
 }
 ```
 
-This example illustrates the schema; it is not a provided manuscript training assignment. Image/label/FOV paths are relative to a dataset root and cannot escape that root. The root is selected by the explicit `data_root` argument, then `CGDD_DATA_ROOT`, then the manifest's `data_root` relative to its own directory. Move or download the datasets separately and override the root on another machine. Dataset images must not be committed or bundled with the repository.
+This is a schema example, not an actual manuscript assignment. Paths must remain within the selected data root. Root priority is an explicit `data_root`, then `CGDD_DATA_ROOT`, then the manifest-relative root. `load_case` returns float32 image `(C,H,W)`, label `(1,H,W)`, and FOV `(1,H,W)` arrays.
 
-`load_manifest(path, data_root=None)` returns validated records with resolved `Path` values. `load_case(record, preprocessing=None)` returns three NumPy float32 arrays: image `(C,H,W)`, vessel label `(1,H,W)`, and FOV `(1,H,W)`. `PatchDataset` returns the same shapes as three float32 PyTorch tensors.
-
-Always call the group validator on all partitions before training a new repository experiment:
-
-```python
-from cgddnet.data import load_manifest, validate_splits
-splits = {name: load_manifest(f"my_protocol/{name}.json", data_root)
-          for name in ("train", "val", "test")}
-validate_splits(splits)
-```
-
-Validation rejects empty sets, missing files, duplicate record/original IDs, duplicate resolved image/label paths, and overlapping subjects. It also hashes image files to detect copied originals with changed filenames and IDs, and derives source identities from known DRIVE, STARE, CHASEDB1, and HRF filename prefixes. CHASE subject IDs are independently derived from `Image_XXL` and `Image_XXR`; conflicting supplied identities are rejected. Exact-byte hashing and filename checks cannot detect arbitrary re-encodings or geometric augmentations whose identities have also been completely renamed, so derivatives must retain `original_id` and must never be independently split. Automatic discovery accepts only original dataset folders, and the manifest loader rejects paths inside an `augmented` directory.
-
-## Inspect without creating a protocol
-
-```bash
-python scripts/prepare_data.py inspect --data-root ../datasets
-```
-
-No train/validation/test assignments are created by inspection. `splits/protocol_status.json` records the evidence status only and is intentionally not a loadable experiment manifest.
+`validate_splits` rejects empty sets, missing files, duplicate record/original identities, overlapping resolved paths and subjects, and exact-byte duplicate image content. CHASE left/right identities are also derived from filenames. These checks cannot identify every re-encoding or renamed augmentation; retain original IDs. Discovery excludes augmented directories. `splits/protocol_status.json` records evidence status and is not a runnable split manifest.
 
 ## Explicitly generate a new protocol
 
-These commands create new experiments. They are not reconstructions of the manuscript runs. Outputs are not prepopulated in this release, and existing manifests are never overwritten.
+The following examples create new experiments, not reconstructed manuscript runs. Existing manifests are never overwritten.
 
 ```bash
-# Keep DRIVE's original 20-image test set; newly select validation images
-# from the original 20-image development set (default: 18 train, 2 val).
+python scripts/prepare_data.py inspect --data-root ../datasets
+
+# Preserve the official DRIVE test set; newly split the development set into 18/2.
 python scripts/prepare_data.py generate --dataset DRIVE --strategy drive-official \
   --data-root ../datasets --output my_protocols/DRIVE --seed 42
 
-# A new five-fold STARE protocol: each fold uses 12 train / 4 val / 4 test.
-# Outer fold k is test; the next outer fold is validation; remaining folds train.
-python scripts/prepare_data.py generate --dataset STARE --strategy kfold --folds 5 \
-  --data-root ../datasets --output my_protocols/STARE --seed 42
+# NEW STARE holdout: 10 development images (8 train + 2 validation), 10 test.
+# This is NOT evidence that the original manuscript trained on these image IDs.
+python scripts/prepare_data.py generate --dataset STARE --strategy holdout \
+  --ratios 0.4 0.1 0.5 --data-root ../datasets --output my_protocols/STARE --seed 42
 
-# A new CHASE holdout groups both eyes of each subject before splitting.
+# NEW grouped CHASE holdout; both eyes of each child remain together.
 python scripts/prepare_data.py generate --dataset CHASEDB1 --strategy holdout \
   --ratios 0.6 0.2 0.2 --data-root ../datasets --output my_protocols/CHASEDB1 --seed 42
 
-# An explicitly NEW HRF holdout, stratified across h/dr/g categories.
-# Default ratios give 27 train / 9 val / 9 test, not the manuscript's 25/20 split.
+# NEW stratified HRF holdout: 27 train / 9 val / 9 test, not the reported 25/20.
 python scripts/prepare_data.py generate --dataset HRF --strategy holdout \
   --ratios 0.6 0.2 0.2 --data-root ../datasets --output my_protocols/HRF --seed 42
 
-python scripts/prepare_data.py validate --train my_protocols/HRF/train.json \
-  --val my_protocols/HRF/val.json --test my_protocols/HRF/test.json --data-root ../datasets
+python scripts/prepare_data.py validate --train my_protocols/STARE/train.json \
+  --val my_protocols/STARE/val.json --test my_protocols/STARE/test.json --data-root ../datasets
 ```
 
-For HRF, the h/dr/g labels describe image categories. The attachment does not establish person-level identity across categories; the new default grouping is therefore image-level. DRIVE and STARE also use image-level grouping unless separate validated subject information is supplied. Only CHASE has explicit left/right eye subject grouping established by the supplied filenames.
+For an exact historical 10/10 or 25/20 reproduction, use the corresponding original image IDs and actual validation/checkpoint-selection policy; do not select new IDs and call them historical. The generic k-fold generator remains available for explicitly different new experiments. DRIVE, STARE, and HRF use image-level grouping unless validated subject information is supplied; this is not a claim that image IDs prove subject independence.
 
-The generator stores the seed, strategy and settings in every manifest and sorts output records by ID. For multi-fold validation in newly generated protocols, each image appears exactly once across outer test folds; the validation fold never contributes training patches within the same outer fold. Use a separate results directory per fold and retain all generated manifests with the corresponding experiment outputs.
+## Statistical sample-size audit
 
-## Author-confirmed manuscript split counts
+`python scripts/exact_p_bounds.py` reports the minimum two-sided exact rank-sum p-value, `2 / comb(n1+n2, n1)`, under independent exchangeable groups with no ties and a doubled smaller tail. Assuming one AUC per test image gives group sizes 20/20 (DRIVE), 8/8 (CHASE_DB1), and 10/10 (STARE). These are mathematical bounds, not empirical Table 7 values, and have no significance stars. All methods share the same bound within a dataset. Self-comparison is not applicable.
 
-The manuscript protocol reports the following counts:
-
-| Dataset | Total images | Train | Test / evaluation |
-|---|---:|---:|---|
-| DRIVE | 40 | 20 | 20 |
-| CHASE_DB1 | 28 | 20 | 8 |
-| STARE | 20 | Per fold | Five-fold evaluation |
-| HRF | 45 | 25 | 20 |
-
-DRIVE uses the official training identifiers 21–40 and test identifiers 01–20. STARE uses five-fold evaluation because no official train-test partition is provided. HRF uses 25 images for training and the remaining 20 for testing, accounting for all 45 images. Exact image-level membership for the manuscript CHASE_DB1, STARE folds, and HRF split is not reconstructed by the repository unless the corresponding original run manifests are supplied.
-
-These counts are the manuscript reporting protocol. New partitions generated with `prepare_data.py` remain labelled as new experiments and must not be represented as recovered manuscript splits.
+The statistic, actual sample unit, ties, sidedness, and exact/asymptotic method must be identified before any empirical recalculation. `summarize_runs.py` is a separate paired repeated-training-run utility, not an implementation of the manuscript's rank-sum analysis. Mean and standard deviation alone do not recover the required observations or ranks.

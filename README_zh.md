@@ -2,7 +2,7 @@
 
 **Context-Guided Dynamic Detail Modeling for Retinal Vessel Segmentation**
 
-作者：**Xincheng Li, Xinyu Zhang, Xiaoqi Sheng**。
+作者：**Xincheng Li, Xiaoqi Sheng, Xinyu Zhang**。
 
 本仓库提供与当前论文结构对应的 PyTorch 实现，包括：
 
@@ -66,7 +66,7 @@ loss = (
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-论文数据协议为 DRIVE `20/20`、CHASE_DB1 `20/8`、STARE 五折评估、HRF `25/20`。`results/` 中保存论文主结果、消融结果和跨数据集结果的机器可读转录，便于核对论文数值。新运行产生的评估文件与这些论文结果转录分开保存。
+作者本轮指定的报告协议为 DRIVE `20/20`、CHASE_DB1 `20/8`、STARE `10/10`、HRF `25/20`（训练/测试）。对应采集 FOV 为 45°、30°、35°、60°，与逐像素 FOV 掩码不同；HRF 60° 来自原始血管分割数据库论文，来源与划分证据见 `docs/data_protocol.md`。`results/` 中保存论文主结果、消融结果和跨数据集结果的机器可读转录，便于核对论文数值。新运行产生的评估文件与这些论文结果转录分开保存。STARE 从五折改为 `10/10` 不会自动重算原数值，也不能据此确认原结果使用了该划分；相应待核实状态保留在 `results/provenance.json`。
 
 ## 使用方法
 
@@ -114,6 +114,6 @@ python scripts/profile_model.py --config configs/default.json --height 96 --widt
 
 当前论文报告 **1.96 M** 可训练参数和固定复杂度比较配置下的 **29.96 GFLOPs**。`docs/profile_measured.json` 中的当前实现部分算子计数作为诊断信息保留，不将其视为对论文 29.96 GFLOPs 的另一套替代结果，也不将 FLOPs 表述为硬件时延。
 
-论文 Table 7 以 AUC 的“均值 ± 标准差”进行统计分析，并采用相对于 CGDD-Net 的 Wilcoxon rank-sum test，以 `p < 0.05` 作为显著性标准。
+论文 Table 7 以 AUC 的“均值 ± 标准差”进行统计分析，并采用相对于 CGDD-Net 的 Wilcoxon rank-sum test，以 `p < 0.05` 作为显著性标准。`python scripts/exact_p_bounds.py` 计算的是给定样本量、无并列秩条件下的双侧精确 rank-sum 理论下限，不是实际实验 p 值，不能替换 Table 7 的数据；实际重算仍需原始 AUC 向量。`summarize_runs.py` 用于新的重复训练分析，不重建 Table 7。
 
 仓库许可证、上游工作流归属和第三方许可信息见 `LICENSE`、`NOTICE` 和 `LICENSES/`。

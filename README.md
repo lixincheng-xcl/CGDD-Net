@@ -6,8 +6,8 @@
 
 <p>
   <a href="https://github.com/lixincheng-xcl">Xincheng Li</a><sup>1</sup>,
-  <a href="https://github.com/zhangxinyu-xyz">Xinyu Zhang</a><sup>1</sup>,
-  Xiaoqi Sheng<sup>2</sup>
+  Xiaoqi Sheng<sup>2</sup>,
+  <a href="https://github.com/zhangxinyu-xyz">Xinyu Zhang</a><sup>1</sup>
 </p>
 
 <p>
@@ -63,7 +63,7 @@ The author-reported experimental environment is NVIDIA H200 141 GB, PyTorch 2.13
 
 ## Data preparation
 
-Obtain DRIVE, STARE, CHASE_DB1, and HRF from their original providers and keep the image data outside the repository. Dataset manifests specify image, label, optional FOV, case ID, and dataset identity. Split validation checks image IDs, original identities, subject identities where available, file paths, and duplicate image content before patch sampling. The manuscript reports DRIVE `20/20`, CHASE_DB1 `20/8`, STARE five-fold evaluation, and HRF `25/20` train-test protocols.
+Obtain DRIVE, STARE, CHASE_DB1, and HRF from their original providers and keep the image data outside the repository. Dataset manifests specify image, label, optional FOV, case ID, and dataset identity. Split validation checks image IDs, original identities, subject identities where available, file paths, and duplicate image content before patch sampling. The author-requested reporting protocol is DRIVE `20/20`, CHASE_DB1 `20/8`, STARE `10/10`, and HRF `25/20` (train/test). Acquisition FOVs are 45°, 30°, 35°, and 60°, respectively; these angular fields of view are distinct from pixel-wise FOV masks. The HRF value follows the original segmentation-database paper, not the separate image-quality dataset; sources and split provenance are recorded in `docs/data_protocol.md`.
 
 ```bash
 python scripts/prepare_data.py inspect --data-root ../datasets
@@ -126,7 +126,7 @@ Only pixels inside the FOV contribute. There are no additional Dice, boundary, t
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-Machine-readable transcriptions of the manuscript's main, ablation, and cross-dataset tables are stored under `results/`. They mirror the manuscript values and are kept separate from locally generated evaluation outputs.
+Machine-readable transcriptions of the manuscript's main, ablation, and cross-dataset tables are stored under `results/`. They mirror the supplied manuscript values and are kept separate from locally generated evaluation outputs. The STARE reporting change from five-fold evaluation to `10/10` does not regenerate these scores or establish their original image-level provenance; that association remains pending in `results/provenance.json`.
 
 ## Profiling and statistics
 
@@ -143,7 +143,7 @@ python scripts/summarize_runs.py completed_runs.csv \
   --reference CGDD-Net --output statistics.json
 ```
 
-The manuscript Table 7 reports AUC as mean ± standard deviation and uses the Wilcoxon rank-sum test with respect to CGDD-Net, with `p < 0.05` treated as statistically significant. The repository statistics utility remains available for newly generated run-level analyses.
+The manuscript Table 7 reports AUC as mean ± standard deviation and uses the Wilcoxon rank-sum test with respect to CGDD-Net, with `p < 0.05` treated as statistically significant. The repository statistics utility remains available for newly generated run-level analyses and is not a reconstruction of Table 7. Run `python scripts/exact_p_bounds.py` for sample-size-based lower bounds under an untied, two-sided exact rank-sum model. These bounds are not observed p-values and must not replace Table 7 entries; the original AUC vectors are required for empirical recalculation.
 
 ## Reproducibility records
 
@@ -151,6 +151,6 @@ A training run stores its resolved configuration, environment metadata, copied m
 
 ## Publishing and attribution
 
-The software is distributed under the repository license; dataset access and redistribution remain governed by the original dataset providers. Upstream workflow attribution is recorded in `NOTICE` and the corresponding license material is retained under `LICENSES/`.
+The software is distributed under the repository license; dataset access and redistribution remain governed by the original providers. Upstream workflow attribution is recorded in `NOTICE` and the corresponding license material is retained under `LICENSES/`.
 
 The manuscript citation metadata will be updated when final publication information becomes available; no journal acceptance or DOI is asserted here.
