@@ -9,7 +9,7 @@ from .metrics import binary_metrics, summarize
 
 
 @torch.inference_mode()
-def sliding_window(model, image, patch_size=96, stride=16, batch_size=8, device="cpu"):
+def sliding_window(model, image, patch_size=64, stride=16, batch_size=8, device="cpu"):
     if patch_size < 16 or not 1 <= stride <= patch_size or batch_size < 1:
         raise ValueError("Require patch_size >= 16, 1 <= stride <= patch_size, batch_size >= 1")
     array = np.asarray(image, dtype=np.float32)

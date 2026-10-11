@@ -37,15 +37,15 @@
 
 - Adam；
 - 基础学习率 `0.001`；
-- batch size `64`；
-- 最多 `100` 轮；
+- 训练 batch size `64`；
+- 固定 `100` 轮，默认关闭 early stopping；
 - 训练 patch `64×64`；
 - 每轮采样 `150000` 个 patch；
 - weight decay `0`；
 - 5 轮线性 warmup，之后使用带重启的余弦调度；
-- 论文训练上限 100 epochs 已于 2026-09-25 由作者确认；此前公开默认值 50 已同步修正；仓库为新运行提供的验证集选模功能不重新定义论文实验协议；
-- 推理 patch `96×96`，stride `16`；
-- patch logits 经 sigmoid 后，在重叠位置平均概率，再以 `0.5` 二值化。
+- Dropout 为 `0.1`；仓库为新运行提供的验证集选模功能不重新定义原实验记录；
+- 推理 patch `64×64`，stride `16`，推理 mini-batch 默认 `8`；
+- patch logits 经 sigmoid 后，在重叠位置平均概率并重构整图，再以 `0.5` 二值化。
 
 损失函数为 FOV 掩码加权的 BCEWithLogits：
 
@@ -66,7 +66,7 @@ loss = (
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-作者本轮指定的报告协议为 DRIVE `20/20`、CHASE_DB1 `20/8`、STARE `10/10`、HRF `25/20`（训练/测试）。对应采集 FOV 为 45°、30°、35°、60°，与逐像素 FOV 掩码不同；HRF 60° 来自原始血管分割数据库论文，来源与划分证据见 `docs/data_protocol.md`。`results/` 中保存论文主结果、消融结果和跨数据集结果的机器可读转录，便于核对论文数值。新运行产生的评估文件与这些论文结果转录分开保存。STARE 从五折改为 `10/10` 不会自动重算原数值，也不能据此确认原结果使用了该划分；相应待核实状态保留在 `results/provenance.json`。
+作者已确认实际实验协议为 DRIVE `20/20`、CHASE_DB1 `20/8`、STARE `10/10`、HRF `25/20`（训练/测试）。所有 STARE 实验原本即采用 `10/10`，此前的五折描述是写作错误，而非实验划分改变。采集 FOV 分别为 45°、30°、35°、60°，与逐像素 FOV 掩码不同；来源与划分记录见 `docs/data_protocol.md`。`results/` 保存论文主结果、消融与跨数据集结果的机器可读转录。本次同步没有重跑实验或修改这些数值，新运行的输出仍另行保存。
 
 ## 使用方法
 
@@ -98,9 +98,9 @@ python evaluate.py \
   --device cuda
 ```
 
-指标在每张图像的 FOV 内计算，再进行不按像素数加权的图像级平均。仓库可导出逐图指标、概率图、二值预测和运行配置等可复现信息。
+AUC 基于重构后的每张整图概率图计算；SE、SP、ACC、F1 基于相应二值图计算。指标在每张图的 FOV 内评估，再进行不按像素数加权的图像级平均。仓库可导出逐图指标、概率图、二值预测和运行配置。
 
-论文实验环境为 NVIDIA H200 141 GB、PyTorch 2.13.0、CUDA 13.2。仓库中的 CPU 自动测试用于验证代码行为，不替代论文中的数据集实验。
+作者确认计算使用 NVIDIA H200 141 GB、Python、PyTorch 和 CUDA；本地工作站为 Mac。Mac 的系统不能被直接写为 H200 计算主机的系统；原运行的具体系统及软件版本未在此断言。CPU 自动测试仅验证代码行为，不替代数据集实验。
 
 ## 数据与发布
 
@@ -109,11 +109,13 @@ DRIVE、STARE、CHASE_DB1 和 HRF 数据需从原始提供方获取，仓库不�
 模型参数和当前实现的部分算子统计可通过：
 
 ```bash
-python scripts/profile_model.py --config configs/default.json --height 96 --width 96
+python scripts/profile_model.py --config configs/default.json --batch-size 64 --height 64 --width 64
 ```
 
-当前论文报告 **1.96 M** 可训练参数和固定复杂度比较配置下的 **29.96 GFLOPs**。`docs/profile_measured.json` 中的当前实现部分算子计数作为诊断信息保留，不将其视为对论文 29.96 GFLOPs 的另一套替代结果，也不将 FLOPs 表述为硬件时延。
+该命令明确记录 `64×1×64×64` 的前向输入；安装 `.[profile]` 后追加 `--fvcore`，可输出支持算子的计数、每 patch 归一化结果、工具版本及不支持的算子。`--batch-size 1` 用于单 patch。该新命令不意味着已经确认 Table 10 原始 profiling 使用相同张量。
 
-论文 Table 7 以 AUC 的“均值 ± 标准差”进行统计分析，并采用相对于 CGDD-Net 的 Wilcoxon rank-sum test，以 `p < 0.05` 作为显著性标准。`python scripts/exact_p_bounds.py` 计算的是给定样本量、无并列秩条件下的双侧精确 rank-sum 理论下限，不是实际实验 p 值，不能替换 Table 7 的数据；实际重算仍需原始 AUC 向量。`summarize_runs.py` 用于新的重复训练分析，不重建 Table 7。
+论文保留 **1.96 M** 参数及共同比较设置下的 **29.96 GFLOPs**。原统计输入形状、库版本及计数约定尚未从日志恢复。64 个 64×64 patch 与一张 512×512 图像仅像素总数相同，不能直接等同其网络计算量。`docs/profile_measured.json` 中的历史部分算子计数作为诊断记录保留，不替代论文数据，也不表示硬件时延。
+
+Table 7 的一个观测代表一张完整测试图像的 AUC；DRIVE、CHASE_DB1、STARE 的向量长度分别为 `20`、`8`、`10`。均值和标准差描述图像间差异，p 值使用相对于 CGDD-Net 的 Wilcoxon rank-sum test，阈值为 `p < 0.05`。原值及星号保留，本次未独立复算。`exact_p_bounds.py` 仅计算理论下限，不替换实测 p 值；`summarize_runs.py` 用于新的重复训练分析，不重建 Table 7。
 
 仓库许可证、上游工作流归属和第三方许可信息见 `LICENSE`、`NOTICE` 和 `LICENSES/`。

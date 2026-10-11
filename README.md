@@ -59,11 +59,11 @@ python -m pytest -q
 python scripts/smoke_test.py
 ```
 
-The author-reported experimental environment is NVIDIA H200 141 GB, PyTorch 2.13.0, and CUDA 13.2. The repository CI and smoke tests are functional checks and do not replace the retinal benchmark experiments reported in the manuscript.
+The author-confirmed benchmark GPU is NVIDIA H200 141 GB, using Python, PyTorch, and CUDA. The local workstation is a Mac; its operating system is not evidence of the H200 execution host's operating system. Exact historical software versions and compute-host OS are not asserted here. Repository CI and smoke tests check software behavior, not the retinal benchmark scores.
 
 ## Data preparation
 
-Obtain DRIVE, STARE, CHASE_DB1, and HRF from their original providers and keep the image data outside the repository. Dataset manifests specify image, label, optional FOV, case ID, and dataset identity. Split validation checks image IDs, original identities, subject identities where available, file paths, and duplicate image content before patch sampling. The author-requested reporting protocol is DRIVE `20/20`, CHASE_DB1 `20/8`, STARE `10/10`, and HRF `25/20` (train/test). Acquisition FOVs are 45°, 30°, 35°, and 60°, respectively; these angular fields of view are distinct from pixel-wise FOV masks. The HRF value follows the original segmentation-database paper, not the separate image-quality dataset; sources and split provenance are recorded in `docs/data_protocol.md`.
+Obtain DRIVE, STARE, CHASE_DB1, and HRF from their original providers and keep the image data outside the repository. Dataset manifests specify image, label, optional FOV, case ID, and dataset identity. Split validation checks image IDs, original identities, subject identities where available, file paths, and duplicate image content before patch sampling. The author-confirmed experimental protocol is DRIVE `20/20`, CHASE_DB1 `20/8`, STARE `10/10`, and HRF `25/20` (train/test). All STARE experiments used `10/10`; the earlier five-fold description was a writing error, not a change of experiments. Acquisition FOVs are 45°, 30°, 35°, and 60°, respectively; these angles are distinct from pixel-wise FOV masks. Sources and split provenance are recorded in `docs/data_protocol.md`.
 
 ```bash
 python scripts/prepare_data.py inspect --data-root ../datasets
@@ -99,11 +99,11 @@ python evaluate.py \
   --device cuda
 ```
 
-The reference configuration uses Adam, base learning rate `0.001`, batch size `64`, at most `100` epochs, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Linear warmup is followed by cosine cycles with restarts. The 100-epoch maximum was author-confirmed on 25 September 2026; the earlier public default of 50 epochs has been corrected. Validation-based checkpoint selection in newly executed repository runs is a reproducibility feature and does not redefine the manuscript-reported protocol.
+The reference configuration uses Adam, base learning rate `0.001`, training batch size `64`, `100` epochs, dropout `0.1`, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Early stopping is disabled in the default configuration so training follows the fixed 100-epoch budget. Linear warmup is followed by cosine cycles with restarts. Validation-based checkpoint selection for new repository runs remains distinct from the original run records.
 
-Inference uses overlapping `96x96` patches with stride `16`. Each patch output is converted from logits to probabilities with sigmoid; overlapping probabilities are averaged before applying the default threshold `0.5`.
+Inference uses overlapping `64x64` patches with stride `16`; the inference mini-batch default remains `8`. Each patch output is converted from logits to probabilities with sigmoid. Overlapping probabilities are averaged to reconstruct the full-image map before applying threshold `0.5`.
 
-Metrics are computed inside each image's FOV and then averaged without pixel-count weighting. The evaluator exports per-image metrics and probability maps when requested.
+AUC is calculated from each reconstructed full-image probability map; SE, SP, ACC, and F1 use its thresholded prediction. Metrics are computed inside each image's FOV and then averaged without pixel-count weighting. The evaluator exports per-image metrics and probability maps when requested.
 
 ## Loss function
 
@@ -126,15 +126,17 @@ Only pixels inside the FOV contribute. There are no additional Dice, boundary, t
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-Machine-readable transcriptions of the manuscript's main, ablation, and cross-dataset tables are stored under `results/`. They mirror the supplied manuscript values and are kept separate from locally generated evaluation outputs. The STARE reporting change from five-fold evaluation to `10/10` does not regenerate these scores or establish their original image-level provenance; that association remains pending in `results/provenance.json`.
+Machine-readable transcriptions of the manuscript's main, ablation, and cross-dataset tables are stored under `results/`. The author confirmed that the existing STARE results were obtained using `10/10`; correcting the earlier description does not alter these scores. Result transcriptions remain separate from outputs generated by new repository runs. No benchmark values were recomputed during this synchronization.
 
 ## Profiling and statistics
 
 ```bash
-python scripts/profile_model.py --config configs/default.json --height 96 --width 96
+python scripts/profile_model.py --config configs/default.json --batch-size 64 --height 64 --width 64
 ```
 
-The manuscript reports **1.96 M** trainable parameters and **29.96 GFLOPs** for the fixed complexity-comparison configuration. `docs/profile_measured.json` records direct parameter measurement and partial supported-operation estimates for the public implementation; those diagnostic partial counts are not treated as a separate replacement for the manuscript's reported model-level FLOP value or as a hardware-latency measurement.
+The command records an explicit `64x1x64x64` forward-pass input and the measured parameter count. Add `--fvcore` after installing `.[profile]` to report supported-operator estimates, per-patch normalization, tool versions, and unsupported operations. Use `--batch-size 1` to profile a single patch. These commands do not establish the historical Table 10 profiling shape.
+
+The manuscript reports **1.96 M** trainable parameters and **29.96 GFLOPs** under its common comparison setup. The original profiling tensor shape, counting-library version, and operation convention have not been recovered. A batch of 64 patches has the same pixel count as a `512x512` image, but this does not establish equal network computation. `docs/profile_measured.json` retains dated partial supported-operation estimates; they are not replacements for the reported total or latency measurements.
 
 For future repeated-run analyses:
 
@@ -143,7 +145,7 @@ python scripts/summarize_runs.py completed_runs.csv \
   --reference CGDD-Net --output statistics.json
 ```
 
-The manuscript Table 7 reports AUC as mean ± standard deviation and uses the Wilcoxon rank-sum test with respect to CGDD-Net, with `p < 0.05` treated as statistically significant. The repository statistics utility remains available for newly generated run-level analyses and is not a reconstruction of Table 7. Run `python scripts/exact_p_bounds.py` for sample-size-based lower bounds under an untied, two-sided exact rank-sum model. These bounds are not observed p-values and must not replace Table 7 entries; the original AUC vectors are required for empirical recalculation.
+Table 7 uses one observation per complete test image: its reconstructed-map AUC. Vector lengths are `20` for DRIVE, `8` for CHASE_DB1, and `10` for STARE. Mean and standard deviation describe variation across images. The author-retained Wilcoxon rank-sum p-values compare each method with CGDD-Net, using `p < 0.05` for significance. Original values and stars remain unchanged; they have not been independently recalculated here. `summarize_runs.py` is for new run-level analyses, not Table 7. `python scripts/exact_p_bounds.py` reports theoretical sample-size bounds, never empirical replacements for the original p-values.
 
 ## Reproducibility records
 
@@ -151,6 +153,6 @@ A training run stores its resolved configuration, environment metadata, copied m
 
 ## Publishing and attribution
 
-The software is distributed under the repository license; dataset access and redistribution remain governed by the original providers. Upstream workflow attribution is recorded in `NOTICE` and the corresponding license material is retained under `LICENSES/`.
+The software is distributed under the repository license; dataset access and redistribution remain governed by the original dataset providers. Upstream workflow attribution is recorded in `NOTICE` and the corresponding license material is retained under `LICENSES/`.
 
 The manuscript citation metadata will be updated when final publication information becomes available; no journal acceptance or DOI is asserted here.

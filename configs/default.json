@@ -1,5 +1,5 @@
 {
-  "description": "The base learning rate 0.001 was confirmed by the author for the reported server experiments on 2026-09-10, and the maximum training budget of 100 epochs was confirmed by the author on 2026-09-25. Other values remain release defaults unless separately confirmed; this is not a recovered server run configuration.",
+  "description": "Author-confirmed settings: grayscale input, 64x64 training and inference patches, batch size 64 for training, 100 epochs, Adam learning rate 0.001, and dropout 0.1. The inference patch size and fixed epoch budget were reconfirmed on 2026-10-12. Remaining settings are documented release defaults unless separately supported by the manuscript; this file is not a recovered historical run configuration.",
   "model": {
     "in_channels": 1,
     "base_channels": 8,
@@ -20,7 +20,7 @@
     "num_workers": 0,
     "lr": 0.001,
     "weight_decay": 0.0,
-    "early_stopping": 6,
+    "early_stopping": 0,
     "warmup_epochs": 5,
     "restart_epochs": 20,
     "restart_mult": 2,
@@ -28,7 +28,7 @@
     "min_lr_factor": 0.0
   },
   "inference": {
-    "patch_size": 96,
+    "patch_size": 64,
     "stride": 16,
     "batch_size": 8,
     "threshold": 0.5

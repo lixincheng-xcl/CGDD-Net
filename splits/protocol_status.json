@@ -1,35 +1,35 @@
 {
-  "schema_version": 2,
-  "status": "author_requested_reporting_counts_original_manifests_pending",
+  "schema_version": 3,
+  "status": "author_confirmed_actual_protocol_counts_original_image_manifests_not_supplied",
   "is_experiment_manifest": false,
-  "reporting_updated_on": "2026-10-12",
-  "source": "Supplied CGDD_Net_Neurocomputing_FormatOnly.zip and author revision request; HRF acquisition source below",
+  "confirmed_on": "2026-10-12",
+  "source": "Explicit author confirmation for the revised Neurocomputing manuscript; acquisition sources below",
   "datasets": {
     "DRIVE": {
       "original_images": 40,
-      "author_requested_train_test": [20, 20],
+      "author_confirmed_train_test": [20, 20],
       "acquisition_fov_degrees": 45,
-      "split_evidence": "official 20/20 directory counts; validation selection not supplied"
+      "split_evidence": "official 20/20 directory counts; validation-selection record not supplied"
     },
     "CHASEDB1": {
       "original_images": 28,
       "subjects": 14,
-      "author_requested_train_test": [20, 8],
+      "author_confirmed_train_test": [20, 8],
       "acquisition_fov_degrees": 30,
       "historical_image_and_subject_assignments": "not_supplied"
     },
     "STARE": {
       "original_images": 20,
-      "author_requested_train_test": [10, 10],
+      "author_confirmed_train_test": [10, 10],
       "acquisition_fov_degrees": 35,
-      "supplied_manuscript_description": "five-fold evaluation",
       "historical_image_assignments": "not_supplied",
-      "score_to_requested_protocol_association": "pending_original_run_evidence"
+      "score_to_protocol_association": "author_confirmed_all_experiments_used_10_train_10_test",
+      "description_correction": "Earlier five-fold wording was incorrect; no experiment or result change."
     },
     "HRF": {
       "original_images": 45,
       "categories": {"h": 15, "dr": 15, "g": 15},
-      "author_requested_train_test": [25, 20],
+      "author_confirmed_train_test": [25, 20],
       "acquisition_fov_degrees": 60,
       "historical_image_assignments": "not_supplied"
     }
@@ -44,11 +44,7 @@
     "STARE_example_train_test": [15, 5],
     "CHASE_example_train_test": [21, 7],
     "CHASE_example_subject_overlap": ["04"],
-    "note": "Legacy baseline examples, not evidence of the actual CGDD-Net split. Augmented images are excluded from independent originals."
+    "note": "Legacy baseline examples, not the actual CGDD-Net experimental split."
   },
-  "corrections": {
-    "STARE": "Requested reporting changes from five-fold to 10/10; no results are recomputed.",
-    "HRF": "Old incomplete status entry 15/20 is superseded by supplied manuscript count 25/20; no image IDs inferred."
-  },
-  "new_protocols": "Generate explicitly with scripts/prepare_data.py; newly generated manifests are not recovered manuscript records."
+  "new_protocols": "Generate explicitly with scripts/prepare_data.py; new manifests are not recovered historical image assignments."
 }

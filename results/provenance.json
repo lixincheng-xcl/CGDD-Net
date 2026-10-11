@@ -12,41 +12,57 @@
     "input_channels": 1,
     "preprocessing": "grayscale scaled to [0,1]",
     "base_learning_rate": 0.001,
-    "max_epochs": 100,
-    "max_epochs_confirmation_date": "2026-09-25",
+    "training_epochs": 100,
+    "training_batch_size": 64,
+    "training_patch": 64,
+    "dropout": 0.1,
     "loss": "FOV-masked BCEWithLogits",
-    "inference_patch": 96,
+    "inference_patch": 64,
     "inference_stride": 16,
+    "inference_batch_size": 8,
     "threshold": 0.5
   },
-  "source_manuscript_protocol": {
-    "DRIVE": "20 train / 20 test",
-    "CHASE_DB1": "20 train / 8 test",
-    "STARE": "five-fold evaluation",
-    "HRF": "25 train / 20 test"
-  },
-  "requested_reporting_protocol": {
-    "updated_on": "2026-10-12",
+  "author_confirmed_experimental_protocol": {
+    "confirmed_on": "2026-10-12",
     "DRIVE": "20 train / 20 test",
     "CHASE_DB1": "20 train / 8 test",
     "STARE": "10 train / 10 test",
     "HRF": "25 train / 20 test"
   },
   "protocol_result_link_status": {
-    "STARE": "Requested 10/10 reporting has not been linked to original run IDs or rerun outputs. Existing values are preserved, not certified as 10/10 results.",
+    "STARE": "Author confirmed all existing STARE experiments used 10/10; earlier five-fold text was a writing error, not a change of experiment.",
     "historical_split_manifests": "not_supplied_for_CHASE_STARE_HRF",
     "benchmark_values_changed": false
   },
   "statistics": {
-    "table_7": "Author-retained AUC mean +/- standard deviation and Wilcoxon rank-sum analysis relative to CGDD-Net; p < 0.05 convention retained.",
+    "table_7": "Author-retained AUC mean +/- standard deviation and Wilcoxon rank-sum p-values relative to CGDD-Net; p < 0.05 convention retained.",
+    "observation_unit": "one complete test image's AUC, calculated after patch probability reconstruction",
+    "vector_lengths": {"DRIVE": 20, "CHASE_DB1": 8, "STARE": 10},
+    "dispersion": "between-image standard deviation, not variability across training seeds",
     "raw_auc_vectors": "not_supplied",
     "empirical_p_values_recomputed": false,
+    "exact_or_asymptotic_algorithm": "not_independently_verified",
     "sample_size_bounds": "scripts/exact_p_bounds.py reports conditional mathematical minima, not empirical p-values or significance."
+  },
+  "complexity": {
+    "common_comparison_setup": "author_reported",
+    "historical_input_shape": null,
+    "historical_counting_library_version": null,
+    "historical_operation_convention": null,
+    "batch_64_by_64_by_64_hypothesis": "not established by U-Net's reported 50.11 GFLOPs; explicit profiler input does not recover the original measurement",
+    "reported_values_replaced": false
+  },
+  "environment": {
+    "gpu": "NVIDIA H200 141 GB",
+    "local_workstation": "Mac",
+    "framework": "PyTorch with Python and CUDA",
+    "gpu_execution_host_os": "not_supplied",
+    "historical_software_versions": "not_independently_verified"
   },
   "result_files": {
     "main_results": "paper_results.csv",
     "ablation_results": "paper_ablation.csv",
     "cross_dataset_results": "paper_transfer.csv"
   },
-  "note": "No result CSV is changed by this documentation revision. Neither a reporting-label change nor a minimum-p bound generates new experimental evidence."
+  "note": "Author-confirmed descriptive corrections do not change any result CSV. No p-value, FLOP total or benchmark score is manufactured during synchronization."
 }
