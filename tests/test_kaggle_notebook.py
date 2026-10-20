@@ -29,3 +29,11 @@ def test_notebook_imports_and_cells_are_valid_python():
     assert "--epochs-override" in joined
     assert "RUN_MODE = \"first_run\"" in joined
     assert "DATASET = \"CHASEDB1\"" in joined
+
+
+def test_session_resume_cli_declares_intermediate_checkpoint_mode():
+    # Parse without running any training or accessing retinal data.
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "experiments/train_controlled.py").read_text()
+    assert "--max-epochs-this-session" in source
+    assert "checkpointed_incomplete_no_test_evaluation" in source
