@@ -11,6 +11,8 @@
 | DRIVE | [Grand Challenge DRIVE](https://drive.grand-challenge.org/) | The *current* official site describes 20 training images with labels and 20 test images whose labels are **not directly exposed**; test predictions go to the hosted evaluation. Account/terms may apply. | Do not fabricate DRIVE test labels or AUC. Only add after acquiring authorized data and a compatible evaluation protocol. |
 | HRF | [FAU fundus dataset](https://www5.cs.fau.de/research/data/fundus-images/) | The 45-image vessel-segmentation dataset (15 healthy, 15 DR, 15 glaucoma) is published under **CC BY 4.0** for research. Do not confuse with the separate image-quality dataset. | Future extension; manual review of category- and subject-aware 25/20 split before training. |
 
+Kaggle's Dataset uploader can **automatically unpack ZIP/TAR archives**. The preparation script also accepts `--source-folder /kaggle/input/<your-private-dataset>` and hashes the expected extracted original provider files. The Notebook detects a unique suitable extracted directory; if several are attached, set `ATTACHED_SOURCE_DIR` explicitly. This still requires sourcing from the original university archive, not an unverified repackaged mirror.
+
 When a university endpoint returns HTTP 403 or redirects to a login/HTML page, **do not bypass it** or pull unknown mirrors. Obtain the original archive through the official browser access process, and add it as a **private Kaggle Dataset** (Dataset → New Dataset → Private), then attach the input to the Notebook. Only use data within its stated terms. The preparation script checks exact expected image IDs and matching first-observer vessel annotations; it records SHA-256 checksums of archives.
 
 The first-batch university image/label archives are **not assumed** to provide an authoritative per-pixel FOV mask. The script deliberately stores `fov: null`; the existing evaluator interprets this as **full rectangular-image evaluation**. This convention must be declared whenever reporting scores and **must not** be mixed with the original FOV-masked manuscript scores. An estimated FOV should not be silently labeled official; any new FOV policy requires a reproducible algorithm and visual inspection of masks before the experiment.
@@ -81,6 +83,10 @@ python -m experiments.kaggle_data --dataset STARE \
   --stare-images /path/to/stare-images.tar \
   --stare-labels /path/to/labels-ah.tar \
   --output /path/to/ephemeral_data --split-seed 20261020
+# Or if Kaggle has automatically expanded the original university archive:
+python -m experiments.kaggle_data --dataset CHASEDB1 \
+  --source-folder /kaggle/input/my-private-chase \
+  --output /kaggle/temp/cgdd_data --split-seed 20261020
 ```
 
 The manifest filenames are `${output}/manifests/${dataset}/{train,test}.json`; `--data-root` in training points to `${output}`. Official data may not be redistributed in a public GitHub commit or Kaggle output without checking applicable rights.
