@@ -127,6 +127,10 @@ def extract_chase(archive: Path, dataset_root: Path) -> list[dict]:
             if key in group:
                 raise ValueError(f"Duplicate CHASE entry for {key}")
             group[key] = raw
+    return _chase_records(images, masks, dataset_root)
+
+
+def _chase_records(images: dict[str, bytes], masks: dict[str, bytes], dataset_root: Path) -> list[dict]:
     if len(images) != 28 or len(masks) != 28 or set(images) != set(masks):
         raise ValueError(f"CHASE archive expected 28 matched images/masks, got {len(images)}/{len(masks)}")
     records = []
@@ -176,6 +180,10 @@ def tar_image_bytes(archive: Path, *, label: bool) -> dict[str, bytes]:
 def extract_stare(image_tar: Path, label_tar: Path, dataset_root: Path) -> list[dict]:
     images = tar_image_bytes(image_tar, label=False)
     masks = tar_image_bytes(label_tar, label=True)
+    return _stare_records(images, masks, dataset_root)
+
+
+def _stare_records(images: dict[str, bytes], masks: dict[str, bytes], dataset_root: Path) -> list[dict]:
     if set(images) != STARE_EXPECTED or set(masks) != STARE_EXPECTED:
         raise ValueError(f"STARE images/labels do not match official 20 IDs: images={sorted(images)} masks={sorted(masks)}")
     records = []
@@ -188,6 +196,58 @@ def extract_stare(image_tar: Path, label_tar: Path, dataset_root: Path) -> list[
                         "dataset": "STARE", "subject": f"STARE:{name}",
                         "image": image, "label": label, "fov": None})
     return records
+
+
+
+
+def extract_official_folder(source_folder: Path, dataset_root: Path, *, dataset: str) -> tuple[list[dict], dict]:
+    """Use original provider files if Kaggle has auto-extracted uploaded ZIP/TARs.
+
+    The parent input directory must contain only the intended official data.
+    SHA256 is computed per matched source file; no inference of historical labels.
+    """
+    source_folder = Path(source_folder).resolve()
+    if not source_folder.is_dir() or source_folder == Path("/"):
+        raise ValueError("Provide a specific official Input directory, not the filesystem root")
+    images: dict[str, bytes] = {}
+    masks: dict[str, bytes] = {}
+    hashes: dict[str, str] = {}
+    for f in sorted(source_folder.rglob("*")):
+        if not f.is_file():
+            continue
+        name = f.name
+        if dataset == "CHASEDB1":
+            im = re.fullmatch(r"(Image_\d{2}[LR])\.(?:jpg|jpeg|png|tif|tiff)", name, re.I)
+            gt = re.fullmatch(r"(Image_\d{2}[LR])_1stHO\.(?:png|gif|tif|tiff|jpg)", name, re.I)
+        elif dataset == "STARE":
+            im = re.fullmatch(r"(im\d{4})\.ppm(?:\.gz)?", name, re.I)
+            gt = re.fullmatch(r"(im\d{4})\.ah\.ppm(?:\.gz)?", name, re.I)
+        else:
+            raise ValueError(dataset)
+        if not (im or gt):
+            continue
+        if f.stat().st_size > 20 * 1024 * 1024:
+            raise ValueError(f"Unexpected oversized provider image: {f}")
+        key = (im or gt).group(1)
+        if dataset == "STARE":
+            key = key.lower()
+        group = images if im else masks
+        if key in group:
+            raise ValueError(f"Duplicate provider file for {key} under {source_folder}")
+        raw = f.read_bytes()
+        hashes[f.relative_to(source_folder).as_posix()] = hashlib.sha256(raw).hexdigest()
+        if name.lower().endswith(".gz"):
+            raw = gzip.decompress(raw)
+        group[key] = raw
+    if dataset == "CHASEDB1":
+        records = _chase_records(images, masks, dataset_root)
+    else:
+        records = _stare_records(images, masks, dataset_root)
+    # SHA of a sorted manifest of original filename/hash pairs, not copied pixels.
+    listing = "".join(f"{name}:{digest}\n" for name,digest in sorted(hashes.items()))
+    combined = hashlib.sha256(listing.encode()).hexdigest()
+    return records, {"original_file_listing_sha256":combined,
+                     "original_files_count":len(hashes), "source_kind":"provider_files_extracted_by_kaggle"}
 
 
 def make_new_split(records: list[dict], *, dataset: str, seed: int) -> tuple[list[dict], list[dict]]:
@@ -258,6 +318,8 @@ def execute(argv=None) -> dict:
     p.add_argument("--chase-zip", type=Path)
     p.add_argument("--stare-images", type=Path)
     p.add_argument("--stare-labels", type=Path)
+    p.add_argument("--source-folder", type=Path,
+                   help="Original provider files auto-extracted by Kaggle from an uploaded official archive")
     p.add_argument("--split-seed", type=int, default=20261020)
     p.add_argument("--no-download", action="store_true", help="Only use provider archives already supplied locally")
     args = p.parse_args(argv)
@@ -275,7 +337,11 @@ def execute(argv=None) -> dict:
         if args.no_download and not path.exists():
             raise FileNotFoundError(f"Attach the original provider archive or download it with the provider permission: {url}")
         return provider_download(url, path)
-    if args.dataset == "CHASEDB1":
+    if args.source_folder:
+        if args.chase_zip or args.stare_images or args.stare_labels:
+            p.error("Specify --source-folder OR individual archives, not both")
+        records, hashes = extract_official_folder(args.source_folder, root, dataset=args.dataset)
+    elif args.dataset == "CHASEDB1":
         archive = source(args.chase_zip, CHASE_URL, "CHASEDB1.zip")
         records = extract_chase(archive, root)
         hashes = {"CHASEDB1.zip": sha256(archive)}
