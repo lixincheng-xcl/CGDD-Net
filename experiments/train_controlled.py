@@ -56,12 +56,18 @@ def options(argv=None):
                         help="FOR SOFTWARE SMOKE TESTS ONLY; not for benchmark tables")
     parser.add_argument("--patches-override", type=int,
                         help="FOR SOFTWARE SMOKE TESTS ONLY; not for benchmark tables")
+    parser.add_argument("--max-epochs-this-session", type=int, default=None,
+                        help="Stop cleanly after at most this many NEW epochs. Save latest.pt, "
+                             "skip test evaluation and exit successfully unless final epoch is reached. "
+                             "Resume next session with the same config and --resume.")
     return parser.parse_args(argv)
 
 
 def run(args):
     if args.seed < 0:
         raise ValueError("Seed must be nonnegative")
+    if args.max_epochs_this_session is not None and args.max_epochs_this_session < 1:
+        raise ValueError("--max-epochs-this-session must be positive")
     cfg = load_config(args.config)
     cfg = json.loads(json.dumps(cfg))  # copy without mutating the original
     cfg["training"]["seed"] = args.seed
@@ -128,7 +134,9 @@ def run(args):
     dataset = PatchDataset(train_records, patch_size=tr["patch_size"],
                            patches_per_epoch=tr["patches_per_epoch"], seed=args.seed,
                            augment=True, preprocessing=cfg["preprocessing"])
-    for epoch in range(start, tr["epochs"]):
+    stop = min(tr["epochs"], start + args.max_epochs_this_session) \
+        if args.max_epochs_this_session is not None else tr["epochs"]
+    for epoch in range(start, stop):
         dataset.set_epoch(epoch)
         # Nonpersistent workers see the current epoch. Worker count is stored.
         gen = torch.Generator().manual_seed(args.seed + epoch)
@@ -163,7 +171,19 @@ def run(args):
             writer.writerow(row)
         print(json.dumps({"variant": args.variant, "seed": args.seed, **row}), flush=True)
 
+    if stop < tr["epochs"]:
+        # Kaggle's Save & Run All creates a separate clean execution session.
+        # Successful exit preserves latest.pt as a versioned Notebook output.
+        # Crucially NO TEST evaluation happens on intermediate checkpoints.
+        progress = {"status": "checkpointed_incomplete_no_test_evaluation",
+                    "variant": args.variant, "seed": args.seed,
+                    "completed_epochs": stop, "target_epochs": tr["epochs"],
+                    "resume_required": True, "smoke_test_only": smoke}
+        write_json(output / "progress.json", progress)
+        print(json.dumps(progress), flush=True)
+        return progress
     # Only the final epoch checkpoint is evaluated; never tune on test outcomes.
+    (output / "progress.json").unlink(missing_ok=True)
     model.eval()
     summary_dir = output / "test"
     if summary_dir.exists():
