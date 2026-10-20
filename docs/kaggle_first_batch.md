@@ -25,10 +25,11 @@ The first-batch university image/label archives are **not assumed** to provide a
 2. Keep `DATASET = "CHASEDB1"`, `RUN_MODE = "first_run"`, `SPLIT_SEED = 20261020`, `SEED = 42` initially. Once the experiment series starts, do not change the split or budget in order to improve a result.
 3. Run cells in order. The data acquisition cell tries the official Kingston archive; if denied, download the official file in a browser, create a **private Kaggle Input**, attach it via **Add Input**, and rerun the data cell.
 4. Read the printed subject- and image-ID lists and review the image/label alignment plots before training. CHASE's 20/8 split is **10 train subjects / 4 test subjects**, with both eyes grouped together.
-5. The Notebook first executes a **one-epoch synthetic-workflow smoke budget** on real images, marked `smoke_test_only` and excluding it from manuscript tables. The pilot assesses whether the code and GPU can run; it is not a biological benchmark.
-6. `RUN_MODE="first_run"` then trains **CGDD-Net full** for **100 fixed epochs, 1024 sampled 64×64 patches per epoch, batch 8**. This fixed, equal-budget protocol is much smaller than the manuscript's 150,000 patches/epoch and is explicitly **NEW**. The last checkpoint is evaluated once; no model selection on test scores.
-7. Save the Notebook's **Version/Output** after completing the first model. Use **Add Input → Notebook Output** to attach the preceding run's output in a subsequent session, set `RESTORE_FROM` to its `cgdd_pr_runs` directory, and change `RUN_MODE` to `first_batch` to continue the remaining four variants.
-8. After completing all five models for a dataset at seed 42, repeat with **predeclared** seeds 2026 and 3407, ensuring budget, data archive versions, FOV protocol, and image IDs are unchanged. Then repeat on STARE using a **new, fixed 10/10 split** (`SPLIT_SEED` unchanged).
+5. The Notebook first executes a **one-epoch tiny smoke budget** on real images, marked `smoke_test_only` and excluding it from manuscript tables. The pilot assesses whether the code and GPU can run; it is not a biological benchmark.
+6. `RUN_MODE="first_run"` starts **CGDD-Net full** for a target **100 fixed epochs, 1024 sampled 64×64 patches per epoch, batch 8**. This equal-budget protocol is **NEW**, far smaller than the manuscript's 150,000 patches/epoch. Default `EPOCHS_PER_SESSION=25` trains 25 epochs per successful Kaggle version and exits with `latest.pt`, `progress.json`, **no test evaluation**. You must resume enough segments to finish all 100 epochs; only the final checkpoint is tested.
+7. Use **Save Version → Save & Run All** as the Kaggle run launcher: it runs cells top-to-bottom in a **separate clean session** and persists `/kaggle/working` outputs if the run completes successfully. **Do not** run the complete training interactively and then choose Save & Run All to snapshot it; this would launch a second run. `Quick Save` skips running, but preserving interactive output may depend on its Advanced Output options.
+8. In the next session, **Add Input → Notebook Output** of the previous successful version; set `RESTORE_FROM` to its attached `cgdd_pr_runs` directory **in the FIRST configuration cell**. Keep `RUN_MODE="first_run"` until the checkpoint reaches epoch100, then `RUN_MODE="first_batch"` for the remaining four variants. The training code validates identical configuration and manifest hashes before resuming.
+9. After completing all five models for seed 42, repeat with **predeclared** seeds 2026 and 3407, ensuring budget, archive versions, FOV protocol, and IDs are unchanged. Then repeat on STARE using a **new, fixed 10/10 split** (`SPLIT_SEED` unchanged).
 
 Only one active Kaggle GPU Notebook can normally be planned per account/session; the quota may be limited and sessions can be interrupted. Kaggle [official Notebook docs](https://www.kaggle.com/docs/notebooks) explain GPU, Internet, Add Input, and Output. Kaggle [GPU efficiency guide](https://www.kaggle.com/docs/efficient-gpu-usage) describes quota usage, typically 30 hours/week or dependent on account and availability. There is no guarantee of a specific accelerator.
 
@@ -56,12 +57,13 @@ The initial matrix is five architectures per dataset: `full`, `independent_detai
   cgdd_pr_runs/<DATASET>/<variant>/seed_<SEED>/
     config.json, environment.json, history.csv, manifests.json
     latest.pt  # saved each completed epoch, resumable
+    progress.json  # only while checkpointed/incomplete; NO test evaluated
     final.pt   # created only after completed 100 epochs
-    experiment_summary.json
+    experiment_summary.json  # only after final epoch
     test/per_image.csv, test/summary.json, test/predictions/
 ```
 
-Resume requires restoring the same saved run directory, a matching resolved configuration and unchanged manifest hashes. A new Notebook session may not retain previous `/kaggle/working` output unless that output is explicitly made available as a new Input; **save a Version or otherwise download backups before the current session expires**. Losing a session before a checkpoint snapshot has been saved is possible.
+Resume requires restoring the same saved run directory, a matching resolved configuration and unchanged manifest hashes. `Save & Run All` starts a **new** execution and is not a live-session snapshot. A new session may not retain prior `/kaggle/working` output unless the output of a successfully saved Version is attached as Input. Use `EPOCHS_PER_SESSION=25` to ensure each segment completes before the default Kaggle Save & Run All runtime limit (official guidance says 12 hours), and check your run time. An unsuccessful session may lose files that were not versioned; reducing segment length does not eliminate platform failures.
 
 ## 4. What constitutes completed evidence
 
