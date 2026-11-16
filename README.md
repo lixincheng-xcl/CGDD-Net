@@ -24,7 +24,7 @@
 
 </div>
 
-This repository provides the PyTorch implementation of the CGDD-Net architecture described in the manuscript. It includes Context-Guided Scale-Adaptive Deformable Encoding (CSDE), Spatially Adaptive Multi-Kernel Gating (SAMG), Dynamic Cross-Scale Detail Fusion (DCDF), detail-guided decoding, selective skip connections, and one criss-cross attention block at the D3 fusion stage.
+This repository provides the PyTorch implementation of CGDD-Net. Context-Guided Scale-Adaptive Deformable Encoding (CSDE) combines fixed-grid convolutions with attention at learned sampling locations. Spatially Adaptive Multi-Kernel Gating (SAMG) weights four kernel sizes at each spatial location. Dynamic Cross-Scale Detail Fusion (DCDF) combines features from three encoder stages into one eight-channel map. Three decoder stages each learn a projection of that map as they reconstruct the vessel mask.
 
 [中文说明](README_zh.md) · [Architecture](docs/architecture.md) · [Data protocol](docs/data_protocol.md) · [Release status](docs/release_status.md)
 
@@ -105,11 +105,11 @@ python evaluate.py \
   --device cuda
 ```
 
-The reference configuration uses Adam, base learning rate `0.001`, training batch size `64`, `100` epochs, dropout `0.1`, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Early stopping is disabled in the default configuration so training follows the fixed 100-epoch budget. Linear warmup is followed by cosine cycles with restarts. Validation-based checkpoint selection for new repository runs remains distinct from the original run records.
+The reference configuration uses Adam, base learning rate `0.001`, training batch size `64`, `100` epochs, dropout `0.1`, `64x64` training patches, `150000` sampled patches per epoch, and zero weight decay. Early stopping is disabled in the default configuration so training follows the fixed 100-epoch budget. Linear warmup is followed by cosine cycles with restarts. The [CHASE_DB1 sensitivity results](results/paper_sensitivity.csv) show how accuracy varied when dropout, batch size or learning rate changed one at a time.
 
 Inference uses overlapping `64x64` patches with stride `16`; the inference mini-batch default remains `8`. Each patch output is converted from logits to probabilities with sigmoid. Overlapping probabilities are averaged to reconstruct the full-image map before applying threshold `0.5`.
 
-AUC is calculated from each reconstructed full-image probability map; SE, SP, ACC, and F1 use its thresholded prediction. Metrics are computed inside each image's FOV and then averaged without pixel-count weighting. The evaluator exports per-image metrics and probability maps when requested.
+AUC uses the reconstructed probability map. SE, SP, ACC and F1 use its thresholded prediction. The evaluator scores pixels inside the supplied field-of-view mask, or across the whole image when no mask is supplied. Each image with a defined score contributes equally to that metric's mean. The evaluator exports per-image metrics and probability maps when requested.
 
 ## Loss function
 
@@ -132,7 +132,9 @@ Only pixels inside the FOV contribute. There are no additional Dice, boundary, t
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-The table shows five of the seven metrics in dissertation Table 4.4. The [full results](results/paper_results.csv) and [seven-stage ablations](results/paper_ablation.csv) also report mIoU and HD95 (mean and standard deviation) for all four datasets. The [cross-dataset results](results/paper_transfer.csv) give the five scores in Table 4.14 as percentages for each of the twelve transfer directions.
+The table shows five of the seven metrics in Xincheng Li's dissertation, *Adaptive Context Modelling and Detail-Guided Reconstruction for Retinal Vessel Segmentation*. The complete [in-domain results](results/paper_results.csv) include mIoU and HD95 (mean ± SD). The [four dataset comparisons](results/paper_comparisons.csv) identify the source study and table for each row. Test splits vary across studies.
+
+Extending detail guidance from D3 alone to D3, D2 and D1 raised F1 by 0.43, 1.11, 0.61 and 0.51 percentage points on DRIVE, CHASE_DB1, STARE and HRF, respectively. On CHASE_DB1 this stage had the highest F1 in the [seven-stage ablation](results/paper_ablation.csv), at 0.8197. Across the [twelve source-only transfers](results/paper_transfer.csv), F1 fell by 1.85 to 14.29 points relative to a model trained on the target dataset and tested on the same images.
 
 ## Profiling and statistics
 
@@ -142,7 +144,7 @@ python scripts/profile_model.py --config configs/default.json --batch-size 64 --
 
 The command records an explicit `64x1x64x64` forward-pass input and the measured parameter count. Add `--fvcore` after installing `.[profile]` to report supported-operator estimates, per-patch normalization, tool versions, and unsupported operations. Use `--batch-size 1` to profile a single patch.
 
-Dissertation Table 4.16 reports **1.96 M** trainable parameters and **29.96 GFLOPs** for CGDD-Net. GDF-Net (16.57 M, 44.06 G), MPS-Net (28.63 M, 39.69 G) and WA-Net (29.47 M, 38.68 G) were profiled with the same input shape and tool. The CGDD-Net FLOP count comes from a separate record. The repository profiler’s supported-operation estimates are recorded in [the profiling log](docs/profile_measured.json).
+Dissertation Table 4.16 reports **1.96 M** trainable parameters and **29.96 GFLOPs** for CGDD-Net. GDF-Net (16.57 M, 44.06 G), MPS-Net (28.63 M, 39.69 G) and WA-Net (29.47 M, 38.68 G) were profiled with the same input shape and tool. The CGDD-Net FLOP count comes from a separate record. See the [ten-model comparison](results/paper_complexity.csv), [parameter and FLOP plot](assets/parameters_flops.pdf) and [repository profiling log](docs/profile_measured.json).
 
 For future repeated-run analyses:
 

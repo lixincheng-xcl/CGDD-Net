@@ -4,6 +4,7 @@
   "indomain_and_ablation_units": "SE, SP, ACC, F1, AUC and mIoU are fractions. HD95_mean and HD95_sd give the reported boundary-distance mean and standard deviation; the distance unit was not recorded.",
   "metric_aggregation": "SE, SP, ACC, F1 and AUC are unweighted image-wise means. The archived summaries do not specify the mIoU class set or the HD95 directional convention.",
   "transfer_units": "percent",
+  "transfer_delta_units": "Signed percentage points in *_delta_pp columns of paper_transfer.csv. Each delta equals the source-trained score minus the target-trained score on the same target images, with a fixed threshold of 0.5 for binary predictions.",
   "manuscript_model": {
     "trainable_parameters": 1956802,
     "parameters_million_rounded": 1.96,
@@ -62,12 +63,26 @@
   },
   "result_files": {
     "main_results": "paper_results.csv",
+    "published_comparisons": "paper_comparisons.csv",
     "ablation_results": "paper_ablation.csv",
-    "cross_dataset_results": "paper_transfer.csv"
+    "ablation_gains": "paper_ablation_gains.csv",
+    "cross_dataset_results": "paper_transfer.csv",
+    "hyperparameter_sensitivity": "paper_sensitivity.csv",
+    "complexity_comparison": "paper_complexity.csv"
   },
   "table_sources": {
     "paper_results.csv": "Dissertation Table 4.4, complete CGDD-Net on four datasets.",
+    "paper_comparisons.csv": "Dissertation Tables 4.5–4.8. ACC, SE, SP, F1, mIoU and AUC are fractions. HD95 contains the reported distance, and HD95_sd contains its standard deviation where available. Empty cells denote values not reported in the tables. score_source and source_table identify the source of each set of scores.",
     "paper_ablation.csv": "Dissertation Tables 4.9–4.12, seven cumulative configurations per dataset.",
-    "paper_transfer.csv": "Dissertation Table 4.14, absolute target scores for twelve source-to-target directions."
+    "paper_ablation_gains.csv": "Dissertation Table 4.13. Each delta is 100 times the difference between the full and baseline configurations in paper_ablation.csv, in percentage points.",
+    "paper_transfer.csv": "Dissertation Table 4.14, absolute target scores and five signed changes for each of twelve source-to-target directions.",
+    "paper_sensitivity.csv": "Dissertation Table 4.15. CHASE_DB1 accuracy (fraction) as dropout, patch batch size or learning rate varies. The default configuration appears in each sweep. The archived experiment records omit the validation split and checkpoint-selection rule.",
+    "paper_complexity.csv": "Dissertation Table 4.16. AUC and F1 are percentages, parameters are in millions and FLOPs are in billions. score_source and cost_source apply separately. 'unspecified' means the cited study did not identify the test dataset for that score."
+  },
+  "score_and_cost_references": {
+    "AttUKAN": "S. Zeng et al., Novel extraction of discriminative fine-grained feature to improve retinal vessel segmentation. Tables 2 (DRIVE), 4 (CHASE_DB1), 3 (STARE) and 5 (HRF). https://doi.org/10.1016/j.imavis.2025.105729",
+    "DSAE-Net": "Z. Zeng et al., Efficient Retinal Vessel Segmentation with 78K Parameters. Table 3. https://doi.org/10.3390/jimaging11090306",
+    "Ma et al.": "M. Ma, L. Liang and X. Sheng, MDF-Net: An Attention-Guided Multi-Scale Dual-Fusion Network for Retinal Vessel Segmentation. Tables 5 and 10. https://doi.org/10.1016/j.measurement.2025.118695",
+    "Ye et al.": "Z. Ye et al., A High-Resolution Network with Strip Attention for Retinal Vessel Segmentation. Table 6. https://doi.org/10.3390/s23218899"
   }
 }

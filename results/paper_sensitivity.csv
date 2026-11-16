@@ -1,0 +1,17 @@
+dataset,hyperparameter,value,ACC
+CHASE_DB1,dropout,0.00,0.9722
+CHASE_DB1,dropout,0.05,0.9731
+CHASE_DB1,dropout,0.10,0.9752
+CHASE_DB1,dropout,0.15,0.9748
+CHASE_DB1,dropout,0.20,0.9745
+CHASE_DB1,batch_size,20,0.9738
+CHASE_DB1,batch_size,40,0.9747
+CHASE_DB1,batch_size,64,0.9752
+CHASE_DB1,batch_size,80,0.9750
+CHASE_DB1,batch_size,100,0.9749
+CHASE_DB1,batch_size,120,0.9740
+CHASE_DB1,learning_rate,0.0001,0.9732
+CHASE_DB1,learning_rate,0.0005,0.9745
+CHASE_DB1,learning_rate,0.001,0.9752
+CHASE_DB1,learning_rate,0.0015,0.9743
+CHASE_DB1,learning_rate,0.002,0.9737

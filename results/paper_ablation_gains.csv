@@ -1,0 +1,5 @@
+dataset,SE_delta_pp,ACC_delta_pp,F1_delta_pp,AUC_delta_pp
+DRIVE,+8.84,+1.73,+2.48,+0.23
+CHASE_DB1,+5.37,+1.45,+0.61,+1.21
+STARE,+8.51,+1.45,+3.49,+2.11
+HRF,+2.91,+0.66,+4.02,+0.27

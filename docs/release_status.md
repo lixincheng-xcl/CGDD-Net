@@ -2,9 +2,20 @@
 
 ## Dissertation results · 16 November 2026
 
-The [archived result tables](../results/) follow the dissertation *Adaptive Context Modelling and Detail-Guided Reconstruction for Retinal Vessel Segmentation*. Table 4.4 reports the complete model, Tables 4.9–4.12 report seven cumulative configurations for each of the four datasets, and Table 4.14 reports all twelve transfer directions. The in-domain and ablation CSVs include mIoU and the mean and standard deviation of HD95.
+Xincheng Li's dissertation *Adaptive Context Modelling and Detail-Guided Reconstruction for Retinal Vessel Segmentation* reports the following experiments.
 
-CGDD-Net has 1,956,802 trainable parameters. Table 4.16 lists this as 1.96 M and gives a historical estimate of 29.96 GFLOPs. GDF-Net, MPS-Net and WA-Net were profiled with the same input shape and tool as one another. For the first six baselines, the table cites the costs reported by Ma et al.
+| Tables | Record | What the values describe |
+|---|---|---|
+| 4.4 | [In-domain results](../results/paper_results.csv) | Complete CGDD-Net on the four target datasets, including mIoU and HD95 (mean ± SD). |
+| 4.5–4.8 | [Published comparisons](../results/paper_comparisons.csv) | Thirteen baselines and CGDD-Net per dataset. Each row identifies the study and table that supplied the scores. Empty cells indicate unreported values. |
+| 4.9–4.13 | [Cumulative ablations](../results/paper_ablation.csv) · [Overall gains](../results/paper_ablation_gains.csv) | Seven successive configurations per dataset. Gains compare the complete model with the internal baseline in percentage points. |
+| 4.14 | [Source-only transfers](../results/paper_transfer.csv) | Twelve directed transfers with fixed source weights and threshold 0.5. The five scores are percentages. Each delta subtracts the corresponding target-trained score on the same images, in percentage points. |
+| 4.15 | [Sensitivity on CHASE_DB1](../results/paper_sensitivity.csv) | One hyperparameter varied at a time. The three sweeps share the same default configuration and its accuracy of 0.9752. |
+| 4.16 | [Complexity comparison](../results/paper_complexity.csv) · [Figure 4.12](../assets/parameters_flops.pdf) | Ten models with separate sources for segmentation scores and computational costs. The graph shows parameters in millions versus reported FLOPs in billions. |
+
+The AttUKAN study used 14 CHASE_DB1 and 15 HRF test images. DSAE-Net used six CHASE_DB1 test images and five-fold cross-validation on DRIVE. CGDD-Net used eight CHASE_DB1, 20 HRF and 20 DRIVE test images. The score sources and table numbers are listed in the [provenance record](../results/provenance.json).
+
+In Figure 4.12, circles show literature costs from Ma et al., triangles show GDF-Net, MPS-Net and WA-Net profiled with the same input shape and tool, and the diamond shows CGDD-Net's separate record (1,956,802 trainable parameters and 29.96 GFLOPs). The cited cost comparison leaves the test dataset unspecified for the AttU-Net and R2U-Net segmentation scores.
 
 ## Manuscript release · 12 October 2026
 

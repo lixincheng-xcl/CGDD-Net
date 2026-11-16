@@ -6,10 +6,10 @@ Dissertation Table 4.2 gives the training and test counts in original fundus ima
 
 | Dataset | Original images | Native width x height | Acquisition FOV | Train / test |
 |---|---:|---|---:|---:|
-| DRIVE | 40 | 565 x 584 | 45° | 20 / 20 |
-| CHASE_DB1 | 28 | 999 x 960 | 30° | 20 / 8 |
-| STARE | 20 | 700 x 605 | 35° | 10 / 10 |
-| HRF | 45 | 3504 x 2336 | 60° | 25 / 20 |
+| [DRIVE](https://doi.org/10.1109/TMI.2004.825627) | 40 | 565 x 584 | 45° | 20 / 20 |
+| [CHASE_DB1](https://doi.org/10.1109/TBME.2012.2205687) | 28 | 999 x 960 | 30° | 20 / 8 |
+| [STARE](https://doi.org/10.1109/42.845178) | 20 | 700 x 605 | 35° | 10 / 10 |
+| [HRF](https://doi.org/10.1155/2013/154860) | 45 | 3504 x 2336 | 60° | 25 / 20 |
 
 For HRF, Section 3 of Odstrcilik et al., *Retinal vessel segmentation by improved matched filtering: evaluation on a new high-resolution fundus image database*, describes the 60° acquisition used for the 45 segmentation images. The provider also lists a separate 45° image-quality dataset. [Acquisition paper](https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-ipr.2012.0455) · [Dataset page](https://www5.cs.fau.de/research/data/fundus-images/)
 
@@ -33,7 +33,16 @@ The reference configuration uses one grayscale channel scaled to `[0,1]`, with n
 
 Training uses 64x64 patches, joint horizontal/vertical flips and rotations of image, label and FOV, batch size 64, Adam at 0.001, dropout 0.1, and 100 epochs. Default early stopping is disabled to preserve the fixed training budget. The current entry point changes the patch-sampling seed each epoch. New repository runs use image-disjoint training/validation manifests; their checkpoint-selection records do not redefine historical runs.
 
-Inference uses 64x64 patches, stride 16 and a mini-batch of eight. Overlapping sigmoid probabilities are averaged and the result is cropped to the original image dimensions. The evaluator computes AUC from this probability map and SE, SP, ACC and F1 from the mask at threshold 0.5. Each test image has equal weight in the dataset mean for these five metrics.
+At inference, a 64×64 window moves 16 pixels at a time along each axis, with eight windows per mini-batch. For the native image dimensions below, the evaluator uses reflection padding at the right and bottom edges where needed. Dissertation Table A.1 gives the resulting number of windows per image.
+
+| Dataset | Padded width × height (pixels) | Horizontal × vertical positions | Windows per image |
+|---|---:|---:|---:|
+| DRIVE | 576 × 592 | 33 × 34 | 1,122 |
+| CHASE_DB1 | 1,008 × 960 | 60 × 57 | 3,420 |
+| STARE | 704 × 608 | 41 × 35 | 1,435 |
+| HRF | 3,504 × 2,336 | 216 × 143 | 30,888 |
+
+Each fully covered interior pixel receives 16 sigmoid probabilities. Pixels near the edges receive fewer. The evaluator divides each pixel's accumulated probability by its own window count and crops the map to the original image size. AUC uses the cropped probabilities. SE, SP, ACC and F1 use the vessel mask obtained by thresholding at 0.5. Each metric is evaluated inside the supplied FOV or over the full image if the FOV is absent. Each image with a defined value contributes equally to that metric's dataset mean.
 
 The dissertation also reports mIoU and HD95 for the complete model and the seven ablation configurations. HD95 is given as a mean and standard deviation. Section 4.1.4 gives the metric definitions and records which details are unspecified: the classes averaged for mIoU, and the distance unit and directional convention for HD95.
 

@@ -1,0 +1,11 @@
+method,score_dataset,AUC_percent,F1_percent,parameters_M,FLOPs_G,score_source,cost_source
+U-Net,STARE,97.37,76.55,34.53,50.11,Ma et al. Table 5,Ma et al. Table 10
+AttU-Net,unspecified,97.75,75.43,34.88,50.96,Ma et al. Table 10,Ma et al. Table 10
+IterNet,STARE,98.81,81.46,1.36,19.44,Ma et al. Table 5,Ma et al. Table 10
+R2U-Net,unspecified,97.61,77.48,39.09,117.08,Ma et al. Table 10,Ma et al. Table 10
+AMFEF-Net,STARE,98.39,79.85,36.79,52.33,Ma et al. Table 5,Ma et al. Table 10
+MDF-Net,STARE,99.36,87.03,2.83,46.36,Ma et al. Table 5,Ma et al. Table 10
+GDF-Net,STARE,98.89,80.22,16.57,44.06,Ye et al. Table 6,Dissertation matched profiling
+MPS-Net,STARE,98.73,84.91,28.63,39.69,Ye et al. Table 6,Dissertation matched profiling
+WA-Net,STARE,98.65,81.76,29.47,38.68,Ye et al. Table 6,Dissertation matched profiling
+CGDD-Net,STARE,98.95,85.10,1.96,29.96,Dissertation Table 4.4,CGDD-Net separate profiling record
