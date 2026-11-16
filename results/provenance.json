@@ -1,7 +1,8 @@
 {
-  "provenance": "Transcribed from the supplied manuscript tables; kept separate from new repository evaluation outputs.",
+  "provenance": "Transcribed from Chapter 4 of Xincheng Li's dissertation, Adaptive Context Modelling and Detail-Guided Reconstruction for Retinal Vessel Segmentation.",
   "generated_by_this_release": false,
-  "indomain_and_ablation_units": "fractions",
+  "indomain_and_ablation_units": "SE, SP, ACC, F1, AUC and mIoU are fractions. HD95_mean and HD95_sd give the reported boundary-distance mean and standard deviation; the distance unit was not recorded.",
+  "metric_aggregation": "SE, SP, ACC, F1 and AUC are unweighted image-wise means. The archived summaries do not specify the mIoU class set or the HD95 directional convention.",
   "transfer_units": "percent",
   "manuscript_model": {
     "trainable_parameters": 1956802,
@@ -35,7 +36,7 @@
     "benchmark_values_changed": false
   },
   "statistics": {
-    "table_7": "Author-retained AUC mean +/- standard deviation and Wilcoxon rank-sum p-values relative to CGDD-Net; p < 0.05 convention retained.",
+    "table_7": "Historical manuscript only. Its Table 7 reports AUC means and standard deviations and Wilcoxon rank-sum comparisons with CGDD-Net. The dissertation tables listed here contain no p-values.",
     "observation_unit": "one complete test image's AUC, calculated after patch probability reconstruction",
     "vector_lengths": {"DRIVE": 20, "CHASE_DB1": 8, "STARE": 10},
     "dispersion": "between-image standard deviation, not variability across training seeds",
@@ -45,7 +46,7 @@
     "sample_size_bounds": "scripts/exact_p_bounds.py reports conditional mathematical minima, not empirical p-values or significance."
   },
   "complexity": {
-    "common_comparison_setup": "author_reported",
+    "common_comparison_setup": "In dissertation Table 4.16, GDF-Net, MPS-Net and WA-Net were profiled with matched input shape and analysis tool. CGDD-Net's reported 29.96 GFLOPs comes from a separate record.",
     "historical_input_shape": null,
     "historical_counting_library_version": null,
     "historical_operation_convention": null,
@@ -64,5 +65,9 @@
     "ablation_results": "paper_ablation.csv",
     "cross_dataset_results": "paper_transfer.csv"
   },
-  "note": "Author-confirmed descriptive corrections do not change any result CSV. No p-value, FLOP total or benchmark score is manufactured during synchronization."
+  "table_sources": {
+    "paper_results.csv": "Dissertation Table 4.4, complete CGDD-Net on four datasets.",
+    "paper_ablation.csv": "Dissertation Tables 4.9–4.12, seven cumulative configurations per dataset.",
+    "paper_transfer.csv": "Dissertation Table 4.14, absolute target scores for twelve source-to-target directions."
+  }
 }

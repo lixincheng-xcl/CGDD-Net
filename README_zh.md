@@ -66,7 +66,7 @@ loss = (
 | STARE | 0.8661 | 0.9812 | 0.9775 | 0.8510 | 0.9895 |
 | HRF | 0.8362 | 0.9823 | 0.9711 | 0.8157 | 0.9874 |
 
-作者已确认实际实验协议为 DRIVE `20/20`、CHASE_DB1 `20/8`、STARE `10/10`、HRF `25/20`（训练/测试）。所有 STARE 实验原本即采用 `10/10`，此前的五折描述是写作错误，而非实验划分改变。采集 FOV 分别为 45°、30°、35°、60°，与逐像素 FOV 掩码不同；来源与划分记录见 `docs/data_protocol.md`。`results/` 保存论文主结果、消融与跨数据集结果的机器可读转录。本次同步没有重跑实验或修改这些数值，新运行的输出仍另行保存。
+学位论文采用的训练／测试划分为 DRIVE `20/20`、CHASE_DB1 `20/8`、STARE `10/10`、HRF `25/20`，采集视野角度依次为 45°、30°、35°、60°。上表列出学位论文表 4.4 中的五项指标。[完整域内结果](results/paper_results.csv)和[七阶段消融结果](results/paper_ablation.csv)还报告了四个数据集的 mIoU 与 HD95（均值和标准差）。[跨数据集结果](results/paper_transfer.csv)按百分数列出表 4.14 中十二个迁移方向的五项得分。
 
 ## 使用方法
 
@@ -112,10 +112,10 @@ DRIVE、STARE、CHASE_DB1 和 HRF 数据需从原始提供方获取，仓库不�
 python scripts/profile_model.py --config configs/default.json --batch-size 64 --height 64 --width 64
 ```
 
-该命令明确记录 `64×1×64×64` 的前向输入；安装 `.[profile]` 后追加 `--fvcore`，可输出支持算子的计数、每 patch 归一化结果、工具版本及不支持的算子。`--batch-size 1` 用于单 patch。该新命令不意味着已经确认 Table 10 原始 profiling 使用相同张量。
+该命令明确记录 `64×1×64×64` 的前向输入；安装 `.[profile]` 后追加 `--fvcore`，可输出支持算子的计数、每 patch 归一化结果、工具版本及不支持的算子。`--batch-size 1` 用于单 patch。
 
-论文保留 **1.96 M** 参数及共同比较设置下的 **29.96 GFLOPs**。原统计输入形状、库版本及计数约定尚未从日志恢复。64 个 64×64 patch 与一张 512×512 图像仅像素总数相同，不能直接等同其网络计算量。`docs/profile_measured.json` 中的历史部分算子计数作为诊断记录保留，不替代论文数据，也不表示硬件时延。
+学位论文表 4.16 报告 CGDD-Net 有 **1.96 M** 个可训练参数，计算量为 **29.96 GFLOPs**。GDF-Net（16.57 M，44.06 G）、MPS-Net（28.63 M，39.69 G）和 WA-Net（29.47 M，38.68 G）采用相同的输入形状和工具测量。CGDD-Net 的 FLOPs 来自另一份记录。仓库工具对支持算子的估算见[计算量记录](docs/profile_measured.json)。
 
-Table 7 的一个观测代表一张完整测试图像的 AUC；DRIVE、CHASE_DB1、STARE 的向量长度分别为 `20`、`8`、`10`。均值和标准差描述图像间差异，p 值使用相对于 CGDD-Net 的 Wilcoxon rank-sum test，阈值为 `p < 0.05`。原值及星号保留，本次未独立复算。`exact_p_bounds.py` 仅计算理论下限，不替换实测 p 值；`summarize_runs.py` 用于新的重复训练分析，不重建 Table 7。
+`summarize_runs.py` 用于分析多次训练得到的得分。早期论文表 7 以每张重建测试图像的 AUC 为一个观测值，其统计记录和 `scripts/exact_p_bounds.py` 所计算的理论界限见[数据协议](docs/data_protocol.md)。
 
 仓库许可证、上游工作流归属和第三方许可信息见 `LICENSE`、`NOTICE` 和 `LICENSES/`。

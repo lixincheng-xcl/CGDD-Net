@@ -2,7 +2,7 @@
 
 ## Reporting protocol and acquisition field of view
 
-The author confirmed the following actual experimental protocols on 12 October 2026. Counts refer to full original images, not patches. All STARE experiments used 10 training and 10 test images; the earlier five-fold description was a writing error.
+Dissertation Table 4.2 gives the training and test counts in original fundus images. All STARE experiments used the same 10/10 split.
 
 | Dataset | Original images | Native width x height | Acquisition FOV | Train / test |
 |---|---:|---|---:|---:|
@@ -11,9 +11,9 @@ The author confirmed the following actual experimental protocols on 12 October 2
 | STARE | 20 | 700 x 605 | 35° | 10 / 10 |
 | HRF | 45 | 3504 x 2336 | 60° | 25 / 20 |
 
-The DRIVE, CHASE_DB1, and STARE angles follow the author-specified Table 1 update. HRF follows Section 3 of Odstrcilik et al., *Retinal vessel segmentation by improved matched filtering: evaluation on a new high-resolution fundus image database*, IET Image Processing 7(4), 373-383 (2013), [doi:10.1049/iet-ipr.2012.0455](https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-ipr.2012.0455). The 45 segmentation images were acquired at 60°. The [provider's page](https://www5.cs.fau.de/research/data/fundus-images/) also describes a separate 45° image-quality dataset; these are not interchangeable.
+For HRF, Section 3 of Odstrcilik et al., *Retinal vessel segmentation by improved matched filtering: evaluation on a new high-resolution fundus image database*, describes the 60° acquisition used for the 45 segmentation images. The provider also lists a separate 45° image-quality dataset. [Acquisition paper](https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-ipr.2012.0455) · [Dataset page](https://www5.cs.fau.de/research/data/fundus-images/)
 
-The manifest field `fov` identifies a binary pixel mask, not an angular camera setting. An angle cannot create or replace an evaluation mask. The author has resolved the STARE score-to-protocol question as 10/10. Original image IDs and archived run manifests are separate reproducibility records and have not been supplied to this repository.
+The manifest field `fov` points to the binary pixel mask used for evaluation. Appendix A identifies DRIVE images 21–40 as the training set and 01–20 as the test set. For CHASE_DB1, STARE and HRF, the records give split sizes but omit the individual filenames. The historical subject assignments for the paired CHASE_DB1 eyes therefore remain unknown.
 
 ## Evidence and original data
 
@@ -33,7 +33,9 @@ The reference configuration uses one grayscale channel scaled to `[0,1]`, with n
 
 Training uses 64x64 patches, joint horizontal/vertical flips and rotations of image, label and FOV, batch size 64, Adam at 0.001, dropout 0.1, and 100 epochs. Default early stopping is disabled to preserve the fixed training budget. The current entry point changes the patch-sampling seed each epoch. New repository runs use image-disjoint training/validation manifests; their checkpoint-selection records do not redefine historical runs.
 
-Inference also uses 64x64 patches. The existing stride 16 and inference mini-batch 8 remain the documented defaults. Sigmoid probabilities are averaged in overlapping regions and cropped to the full original image before thresholding at 0.5. AUC is evaluated on the reconstructed probability map; SE, SP, ACC and F1 on the corresponding binary map. Metrics are computed per image inside its FOV and then averaged without pixel-count weighting. Image patches are never separate Table 7 observations.
+Inference uses 64x64 patches, stride 16 and a mini-batch of eight. Overlapping sigmoid probabilities are averaged and the result is cropped to the original image dimensions. The evaluator computes AUC from this probability map and SE, SP, ACC and F1 from the mask at threshold 0.5. Each test image has equal weight in the dataset mean for these five metrics.
+
+The dissertation also reports mIoU and HD95 for the complete model and the seven ablation configurations. HD95 is given as a mean and standard deviation. Section 4.1.4 gives the metric definitions and records which details are unspecified: the classes averaged for mIoU, and the distance unit and directional convention for HD95.
 
 ## Portable manifest and validation
 
@@ -94,6 +96,6 @@ Historical reproduction requires the original image IDs and actual checkpoint-se
 
 ## Statistical sample-size audit
 
-The author confirmed that Table 7 uses per-image AUC observations from complete reconstructed test images: 20 for DRIVE, 8 for CHASE_DB1, and 10 for STARE. The displayed means and standard deviations summarize these image-level vectors. Wilcoxon rank-sum comparisons are relative to CGDD-Net. All original Table 7 p-values and significance marks are retained; no raw AUC vectors have been supplied for independent recalculation.
+Table 7 of the earlier manuscript compared per-image AUC using the Wilcoxon rank-sum test, with 20 images for DRIVE, eight for CHASE_DB1 and ten for STARE. The dissertation comparison tables report descriptive scores. The original per-image AUC vectors for those rank-sum comparisons are unavailable in this release.
 
 `python scripts/exact_p_bounds.py` reports `2 / comb(n1+n2, n1)` under an untied, independent-exchangeable, doubled-tail exact rank-sum model. It is a theoretical diagnostic, not an observed p-value. Equal sample sizes give equal bounds, regardless of the methods' AUCs. The actual raw vectors, ties and computational method are required for recalculation; no exact-method claim is added to the manuscript. `summarize_runs.py` is a separate repeated-training-run analysis utility.

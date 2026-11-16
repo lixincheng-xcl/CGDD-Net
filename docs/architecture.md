@@ -1,7 +1,8 @@
 # CGDD-Net architecture and implementation choices
 
-This code implements the current manuscript Figures 2--5 and the equations in
-`Sections/methods.tex`. It was written as a new package inside the existing
+Dissertation Figures 3.1–3.4 show the full network, CSDE, SAMG and DCDF,
+respectively. The figure numbers below follow Figures 2–5 of the manuscript.
+The implementation was written as a new package inside the existing
 VesselSeg-Pytorch checkout. It does not load, modify, or copy the baseline's model
 implementations. Existing baseline files remain separate.
 
