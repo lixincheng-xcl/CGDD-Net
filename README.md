@@ -28,7 +28,7 @@ This repository provides the PyTorch implementation of CGDD-Net. Context-Guided 
 
 [中文说明](README_zh.md) · [Architecture](docs/architecture.md) · [Data protocol](docs/data_protocol.md) · [Release status](docs/release_status.md)
 
-![CGDD-Net architecture](assets/architecture.png)
+[![CGDD-Net encoder, shared detail map, decoder and direct skip connections](assets/architecture.png)](assets/architecture.png)
 
 ## Manuscript-aligned implementation
 
@@ -44,6 +44,23 @@ The implementation follows the current manuscript design choices:
 - The shared detail representation is reused at D3, D2, and D1. Direct encoder skips are retained at E4 and E1.
 - Main-path down/up channel projections use `1x1 Conv-BN-ReLU`; the prediction head is a bare `1x1` convolution producing logits.
 - A single CCA block is applied after the D3 fusion unit.
+
+<details>
+<summary>View the CSDE, SAMG and DCDF module diagrams</summary>
+
+CSDE combines a fixed convolution branch with local deformable attention and fuses their outputs.
+
+[![CSDE parallel convolution and deformable attention branches](assets/csde.png)](assets/csde.png)
+
+SAMG weights the 1×1, 3×3, 5×5 and 7×7 kernel responses at each location using global and local features.
+
+[![SAMG kernel branches and global and local gates](assets/samg.png)](assets/samg.png)
+
+DCDF aligns the gated E2, E3 and E4 maps at E3 resolution, concatenates them and projects the result to eight channels.
+
+[![DCDF brings three encoder feature maps onto one grid](assets/dcdf.png)](assets/dcdf.png)
+
+</details>
 
 The seven cumulative ablations are:
 
@@ -134,7 +151,24 @@ Only pixels inside the FOV contribute. There are no additional Dice, boundary, t
 
 The table shows five of the seven metrics in Xincheng Li's dissertation, *Adaptive Context Modelling and Detail-Guided Reconstruction for Retinal Vessel Segmentation*. The complete [in-domain results](results/paper_results.csv) include mIoU and HD95 (mean ± SD). The [four dataset comparisons](results/paper_comparisons.csv) identify the source study and table for each row. Test splits vary across studies.
 
-Extending detail guidance from D3 alone to D3, D2 and D1 raised F1 by 0.43, 1.11, 0.61 and 0.51 percentage points on DRIVE, CHASE_DB1, STARE and HRF, respectively. On CHASE_DB1 this stage had the highest F1 in the [seven-stage ablation](results/paper_ablation.csv), at 0.8197. Across the [twelve source-only transfers](results/paper_transfer.csv), F1 fell by 1.85 to 14.29 points relative to a model trained on the target dataset and tested on the same images.
+<p align="center"><a href="assets/qualitative_examples.png"><img src="assets/qualitative_examples.png" alt="Matched CGDD-Net and manual vessel masks from CHASE_DB1 and HRF" width="590"></a></p>
+
+Each row pairs a CGDD-Net prediction (left) and the manual annotation (right) from the same region. On CHASE_DB1, several vessels converge near the optic disc. On HRF, the model follows the near-vertical vessel but misses part of a thin side branch visible in the annotation. [Dataset credits and licence](NOTICE)
+
+Extending detail guidance from D3 alone to D3, D2 and D1 raised F1 by 0.43, 1.11, 0.61 and 0.51 percentage points on DRIVE, CHASE_DB1, STARE and HRF, respectively. On CHASE_DB1 this stage had the highest F1 in the [seven-stage ablation](results/paper_ablation.csv), at 0.8197.
+
+<details>
+<summary>View F1 across all seven cumulative configurations</summary>
+
+[![F1 by cumulative configuration for DRIVE, CHASE_DB1, STARE and HRF](assets/ablation_f1.png)](assets/ablation_f1.png)
+
+</details>
+
+Across the [twelve source-only transfers](results/paper_transfer.csv), F1 fell by 1.85 to 14.29 points relative to a model trained on the target dataset and tested on the same images.
+
+<p align="center"><a href="assets/transfer_f1.png"><img src="assets/transfer_f1.png" alt="F1 matrix with training datasets on rows and test datasets on columns. The diagonal shows in-domain scores." width="640"></a></p>
+
+Rows identify the training dataset and columns the test dataset. Outlined cells are the in-domain references. At the same threshold of 0.5, DRIVE → CHASE_DB1 scored 71.44% F1 and CHASE_DB1 → DRIVE scored 68.94%.
 
 ## Profiling and statistics
 
@@ -145,6 +179,10 @@ python scripts/profile_model.py --config configs/default.json --batch-size 64 --
 The command records an explicit `64x1x64x64` forward-pass input and the measured parameter count. Add `--fvcore` after installing `.[profile]` to report supported-operator estimates, per-patch normalization, tool versions, and unsupported operations. Use `--batch-size 1` to profile a single patch.
 
 Dissertation Table 4.16 reports **1.96 M** trainable parameters and **29.96 GFLOPs** for CGDD-Net. GDF-Net (16.57 M, 44.06 G), MPS-Net (28.63 M, 39.69 G) and WA-Net (29.47 M, 38.68 G) were profiled with the same input shape and tool. The CGDD-Net FLOP count comes from a separate record. See the [ten-model comparison](results/paper_complexity.csv), [parameter and FLOP plot](assets/parameters_flops.pdf) and [repository profiling log](docs/profile_measured.json).
+
+[![Reported FLOPs versus parameter count for ten models. CGDD-Net is at 1.96 million parameters and 29.96 GFLOPs.](assets/parameters_flops.png)](assets/parameters_flops.pdf)
+
+Circles show costs reported by Ma et al., triangles show the three models profiled together, and the diamond marks CGDD-Net.
 
 For future repeated-run analyses:
 

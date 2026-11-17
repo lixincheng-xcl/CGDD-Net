@@ -15,3 +15,22 @@ The upstream retinal image datasets are not included and are not licensed by
 this software license. Obtain them from their original providers.
 The manuscript's reported benchmark scores are author-supplied results, not
 measurements produced by the repository's synthetic smoke tests.
+
+README illustration: assets/qualitative_examples.png
+
+Prediction panels by Xincheng Li. The paired manual reference masks are
+cropped from the same regions shown in dissertation Figures 4.3 and 4.5
+and enlarged for display. The reference masks are licensed under
+Creative Commons Attribution 4.0 International:
+https://creativecommons.org/licenses/by/4.0/
+
+CHASE_DB1 retinal vessel reference dataset (2012), Kingston University.
+Sarah Barman, Andreas Hoppe, Paolo Remagnino, Muhammad Moazam Fraz,
+Bunyarit Uyyanonvara, Alicja R. Rudnicka and Christopher G. Owen.
+https://researchinnovation.kingston.ac.uk/en/datasets/chasedb1-retinal-vessel-reference-dataset-4/
+https://doi.org/10.1109/TBME.2012.2205687
+
+High-Resolution Fundus (HRF) Image Database. Attila Budai, Rüdiger Bock,
+Andreas Maier, Joachim Hornegger and Georg Michelson (2013).
+https://www5.informatik.uni-erlangen.de/research/data/fundus-images/
+https://doi.org/10.1155/2013/154860
